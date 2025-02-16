@@ -9,6 +9,7 @@ from getpass import getpass
 from garth.exc import GarthHTTPError
 from garminconnect import Garmin, GarminConnectAuthenticationError
 import warnings
+from etl import config
 
 warnings.filterwarnings('ignore', category=FutureWarning)
 
@@ -29,10 +30,19 @@ def init_garmin(email, password):
         garmin.garth.dump(tokenstore)
     return garmin
 
-def get_garmin_data(garmin_client, start_date=datetime.date(2024, 3, 16)):
+def get_garmin_data(garmin_client, start_date=None):
+    """Get Garmin data.
+    
+    Args:
+        garmin_client: Garmin client
+        start_date: Optional start date, defaults to config.DATA_START_DATE
+    """
+    if start_date is None:
+        start_date = config.DATA_START_DATE
+        
     api = garmin_client
     end_date = datetime.date.today()
-    data_file = 'data/garmin_daily.csv'
+    data_file = config.GARMIN_DAILY_FILE  # Use config instead of hardcoded path
     
     existing_data = None
     if os.path.exists(data_file):
@@ -66,5 +76,5 @@ if __name__ == "__main__":
     garmin_client = init_garmin(email, password)
     df = get_garmin_data(garmin_client)
     if df is not None:
-        df.to_csv('data/garmin_daily.csv', index=False)
-        logger.info('Garmin data saved to data/garmin_daily.csv')
+        df.to_csv(config.GARMIN_DAILY_FILE, index=False)  # Use config
+        logger.info(f'Garmin data saved to {config.GARMIN_DAILY_FILE}')

@@ -3,3 +3,4 @@ pandas
 garth
 garminconnect
 streamlit
+whoop

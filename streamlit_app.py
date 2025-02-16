@@ -1,54 +1,86 @@
 import streamlit as st
 import pandas as pd
-from etl import init_garmin, get_garmin_data
+from etl import init_garmin, get_garmin_data, init_whoop, get_sleep_recovery_data, config
 import os
 
-def run_etl():
+def run_garmin_etl():
     """
-    Ejecuta el script ETL para actualizar los datos de Garmin.
+    Execute Garmin ETL to update data.
     """
     try:
-        # Get credentials from environment
         email = os.getenv("USERNAME_G")
         password = os.getenv("PASSWORD_G")
         
-        # Initialize Garmin client and get data
         garmin_client = init_garmin(email, password)
         df = get_garmin_data(garmin_client)
         
         if df is not None:
-            df.to_csv('data/garmin_daily.csv', index=False)
-            st.success("ETL ejecutado correctamente!")
+            df.to_csv(config.GARMIN_DAILY_FILE, index=False)
+            st.success("Garmin ETL executed successfully")
         else:
-            st.error("No se obtuvieron datos del ETL.")
+            st.error("Garmin ETL failed to execute")
     except Exception as e:
-        st.error(f"Error al ejecutar el ETL: {str(e)}")
+        st.error(f"Garmin ETL failed: {str(e)}")
 
-def get_last_distance():
+def run_whoop_etl():
     """
-    Lee el archivo CSV generado por el ETL y retorna la distancia corrida del último día.
+    Execute Whoop ETL to update data.
     """
     try:
-        df = pd.read_csv("data/garmin_daily.csv")
-        if df.empty:
-            st.warning("El archivo CSV está vacío.")
-            return None
-        last_entry = df.iloc[-1]
-        distance = last_entry.get("totalDistanceMeters", None)
-        return distance
+        un = os.getenv("USERNAME_W")
+        pw = os.getenv("PASSWORD_W")
+        
+        whoop_client = init_whoop(un, pw)
+        df = get_sleep_recovery_data(whoop_client)
+        
+        if df is not None:
+            df.to_csv(config.WHOOP_SLEEP_RECOVERY_FILE, index=False)
+            st.success("Whoop ETL executed successfully")
+        else:
+            st.error("Whoop ETL failed to execute")
     except Exception as e:
-        st.error("Error al leer el archivo CSV: " + str(e))
-        return None
+        st.error(f"Whoop ETL failed: {str(e)}")
 
-st.title("Dashboard de Garmin")
+def get_last_metrics():
+    """
+    Read CSV files and return metrics from the last day.
+    """
+    try:
+        # Garmin data
+        df_garmin = pd.read_csv(config.GARMIN_DAILY_FILE)
+        if df_garmin.empty:
+            st.warning("Garmin file is empty")
+            return None, None
+        last_garmin = df_garmin.iloc[-1]
+        distance = last_garmin.get("totalDistanceMeters", None)
+        
+        # Whoop data
+        df_whoop = pd.read_csv(config.WHOOP_SLEEP_RECOVERY_FILE)
+        if df_whoop.empty:
+            st.warning("Whoop file is empty")
+            return distance, None
+        last_whoop = df_whoop.iloc[-1]
+        recovery = last_whoop.get("recovery_score", None)
+        
+        return distance, recovery
+    except Exception as e:
+        st.error(f"Error reading CSV files: {str(e)}")
+        return None, None
 
-# Botón para actualizar datos
-if st.button("Actualizar datos Garmin"):
-    run_etl()
+st.title("Fitness Dashboard")
 
-# Mostrar la distancia del último día
-distance = get_last_distance()
+# Update data buttons
+col1, col2 = st.columns(2)
+with col1:
+    if st.button("Update Garmin Data"):
+        run_garmin_etl()
+with col2:
+    if st.button("Update Whoop Data"):
+        run_whoop_etl()
+
+# Show last day metrics
+distance, recovery = get_last_metrics()
 if distance is not None:
-    st.write(f"La distancia corrida en el último día es: {distance}")
-else:
-    st.write("No se pudo obtener la distancia.")
+    st.write(f"Last day's running distance: {distance:.2f} meters")
+if recovery is not None:
+    st.write(f"Last day's recovery score: {recovery}%")
