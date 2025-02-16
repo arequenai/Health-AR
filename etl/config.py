@@ -12,10 +12,9 @@ DATA_DIR_RAW = 'data/raw'
 # File names
 GARMIN_DAILY_FILE = f'{DATA_DIR}/garmin_daily.csv'
 
-# Whoop specific config
 WHOOP_SLEEP_RECOVERY_FILE = f'{DATA_DIR}/whoop.csv'
 WHOOP_JOURNAL_RAW_FILE = f'{DATA_DIR_RAW}/journal_entries.csv'
 WHOOP_JOURNAL_CLEAN_FILE = f'{DATA_DIR}/journal.csv'
 
-# Add if not already there
-GARMIN_DATA_START_DATE = date(2024, 3, 16)  # If you want a different start date for Garmin
+MFP_MEALS_FILE = f'{DATA_DIR}/mfp_meals.csv'
+MFP_DAILY_FILE = f'{DATA_DIR}/mfp_daily.csv'

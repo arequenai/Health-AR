@@ -4,3 +4,5 @@ garth
 garminconnect
 streamlit
 whoop
+myfitnesspal
+setuptools
