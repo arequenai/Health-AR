@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+env/
+venv/
+.env
+
+# Credentials and secrets
+Credentials.env
+gsheets key.json
+*.json
+
+# Docker
+.docker/

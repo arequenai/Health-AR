@@ -1,0 +1,13 @@
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.env
+.venv
+*.log
+.git
+.gitignore
+Credentials.env
+gsheets key.json 
