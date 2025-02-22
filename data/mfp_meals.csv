@@ -3337,3 +3337,49 @@ date,meal,food,quant,calories,carbs,fat,protein,sodium,sugar
 2025-02-16,dinner,"Ceviche De Pescado, 2 taza",2,329.0,11.0,5.0,62.0,1744.0,4.0
 2025-02-16,dinner,"Generic - Chicharron De Pescado, 130 g",130,533.0,13.0,39.0,33.0,780.0,0.0
 2025-02-16,snacks,"Palomitas - Palomitas, 80 g",80,395.0,36.0,14.0,4.0,3.0,1.0
+2025-02-17,breakfast,"Generic - Huevo A La Plancha, 2 huevo",2,200.0,1.0,9.0,11.0,124.0,1.0
+2025-02-17,breakfast,"Pan - Pan Blanco ✓, 70 g",70,179.0,39.0,1.0,5.0,350.0,4.0
+2025-02-17,lunch,"Merluza - Filete De Merluza A La Plancha, 200 gramos",200,264.0,1.0,9.0,43.0,814.0,0.0
+2025-02-17,lunch,"Findus - Patatas panadera, 300 g",300,429.0,45.0,22.0,7.0,1500.0,5.0
+2025-02-17,lunch,"Supersol - Tortilla De Patatas, 70 g",70,95.0,11.0,4.0,3.0,0.0,0.0
+2025-02-17,lunch,"Royal - Tartar de Salmón y Aguacate, 100 gramo",100,193.0,2.0,14.0,14.0,0.0,1.0
+2025-02-17,dinner,"Findus - Patatas panadera, 100 g",100,143.0,15.0,7.0,2.0,500.0,2.0
+2025-02-17,dinner,"Moralejo - costillar cordero lechal, 0.25 kg",0.25,413.0,0.0,29.0,45.0,0.0,0.0
+2025-02-18,breakfast,"Supersol - Tortilla De Patatas, 200 g",200,270.0,30.0,12.0,8.0,0.0,0.0
+2025-02-18,breakfast,"Pan - Pan Blanco ✓, 50 g",50,128.0,28.0,0.0,4.0,250.0,3.0
+2025-02-18,lunch,"Home - Hamburguesa, 1 piece",1,495.0,40.0,25.0,27.0,0.0,0.0
+2025-02-18,lunch,"Homemade - Patatas Fritas, 75 gr",75,195.0,14.0,15.0,2.0,113.0,0.0
+2025-02-18,dinner,"Supersol - Tortilla De Patatas, 150 g",150,203.0,23.0,9.0,6.0,0.0,0.0
+2025-02-18,dinner,"Egg, 1.5 large",1.5,107.0,1.0,7.0,9.0,107.0,0.0
+2025-02-18,dinner,"Wrap - Wrap, 0.7 wrap",0.7,210.0,34.0,6.0,6.0,0.0,0.0
+2025-02-18,dinner,"Sandwich, 2 slices of bread",2,155.0,28.0,2.0,6.0,295.0,3.0
+2025-02-18,snacks,"Chocolate 70% Lindt - Chocolate 70% Lindt, 8 gram",8,45.0,3.0,3.0,1.0,8.0,2.0
+2025-02-18,snacks,"Chicken nuggets, 3.5 nugget",3.5,172.0,8.0,11.0,9.0,333.0,0.0
+2025-02-19,breakfast,"Avena - Avena Hacendado, 50 gr",50,233.0,37.0,4.0,9.0,0.0,0.0
+2025-02-19,breakfast,"226ERS - Isolate protein, 30 g",30,110.0,1.0,0.0,26.0,0.0,0.0
+2025-02-19,lunch,"Ensalada Polllo Ofi Bain, 0.75 serving",0.75,417.0,18.0,26.0,28.0,50.0,5.0
+2025-02-19,lunch,"Supersol - Tortilla De Patatas, 220.0 g",220.0,297.0,33.0,13.0,9.0,0.0,0.0
+2025-02-19,lunch,"Pan - Pan Blanco ✓, 20 g",20,51.0,11.0,0.0,1.0,100.0,1.0
+2025-02-19,dinner,"Pan - Pan Blanco ✓, 85 g",85,217.0,47.0,1.0,6.0,425.0,4.0
+2025-02-19,dinner,"redondo ternera - redondo ternera, 120 gramo",120,154.0,3.0,8.0,18.0,2.0,1.0
+2025-02-19,dinner,"Salsa Cebolla Caramelizada - Salsa Cebolla Caramelizada, 60 gramo",60,199.0,14.0,16.0,0.0,0.0,0.0
+2025-02-19,dinner,"Veritas - Cortezas de lentejas, 50 gramos",50,237.0,28.0,11.0,6.0,1.0,1.0
+2025-02-19,snacks,"Plátano - Platano, 1 pieza",1,105.0,27.0,0.0,1.0,0.0,14.0
+2025-02-20,breakfast,"Pan - Pan Blanco ✓, 70 g",70,179.0,39.0,1.0,5.0,350.0,4.0
+2025-02-20,breakfast,"redondo ternera - redondo ternera, 50 gramo",50,64.0,1.0,3.0,8.0,1.0,0.0
+2025-02-20,breakfast,"Salsa Cebolla Caramelizada - Salsa Cebolla Caramelizada, 40 gramo",40,133.0,10.0,10.0,0.0,0.0,0.0
+2025-02-20,lunch,"Ensalada Polllo Ofi Bain, 1.1 serving",1.1,611.0,27.0,38.0,41.0,73.0,7.0
+2025-02-20,dinner,"Ceviche De Pescado, 2 taza",2,329.0,11.0,5.0,62.0,1744.0,4.0
+2025-02-20,dinner,"Peru - Arroz Chaufa De Pollo, 230.0 g",230.0,412.0,65.0,10.0,13.0,559.0,0.0
+2025-02-21,breakfast,"226ERS - Isolate protein, 30 g",30,110.0,1.0,0.0,26.0,0.0,0.0
+2025-02-21,breakfast,"Avena - Avena Hacendado, 50 gr",50,233.0,37.0,4.0,9.0,0.0,0.0
+2025-02-21,lunch,"Melomadi - Croissant Jamon Serrsno y Queso, 360 gram",360,706.0,52.0,40.0,33.0,0.0,14.0
+2025-02-21,lunch,"Jamon Serrano - Jamon Serrano Bellota, 20 gr",20,48.0,0.0,3.0,6.0,0.0,0.0
+2025-02-21,lunch,"Empanada - Empanada atun, 35 gr",35,98.0,9.0,6.0,3.0,0.0,1.0
+2025-02-21,lunch,"Supersol - Tortilla De Patatas, 60 g",60,81.0,9.0,4.0,2.0,0.0,0.0
+2025-02-21,dinner,"Shawarma - Chicken Shawarma, 2.9 wrap",2.9,1247.0,131.0,27.0,112.0,1450.0,9.0
+2025-02-22,breakfast,"Supersol - Tortilla De Patatas, 180 g",180,243.0,27.0,11.0,7.0,0.0,0.0
+2025-02-22,breakfast,"Pan - Pan Blanco ✓, 40 g",40,102.0,22.0,0.0,3.0,200.0,2.0
+2025-02-22,lunch,"KFC - Original Recipe Chicken, Thigh, 286 g",286,754.0,21.0,55.0,47.0,2210.0,0.0
+2025-02-22,lunch,"Homemade - Patatas Fritas, 75 gr",75,195.0,14.0,15.0,2.0,113.0,0.0
+2025-02-22,snacks,"226ERS - Isolate protein, 30 g",30,110.0,1.0,0.0,26.0,0.0,0.0
