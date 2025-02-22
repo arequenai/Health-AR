@@ -17,19 +17,11 @@ st.markdown(DASHBOARD_CSS, unsafe_allow_html=True)
 # Main layout
 metrics = get_metrics()
 if metrics:
-    # Display metrics in grid
-    for row in [('Nutrition', 'Recovery'), ('Sleep', 'Running'), ('Strength', 'Glucose')]:
-        col1, col2 = st.columns(2)
-        with col1:
-            display_metric_box(row[0], 
-                             metrics[row[0].lower()]['primary'],
-                             metrics[row[0].lower()]['secondary1'],
-                             metrics[row[0].lower()]['secondary2'])
-        with col2:
-            display_metric_box(row[1],
-                             metrics[row[1].lower()]['primary'],
-                             metrics[row[1].lower()]['secondary1'],
-                             metrics[row[1].lower()]['secondary2'])
+    for metric_name in ['Nutrition', 'Recovery', 'Sleep', 'Running', 'Strength', 'Glucose']:
+        display_metric_box(metric_name,
+                         metrics[metric_name.lower()]['primary'],
+                         metrics[metric_name.lower()]['secondary1'],
+                         metrics[metric_name.lower()]['secondary2'])
 
 # Update button and status message placeholder
 update_col, status_col = st.columns([1, 4])

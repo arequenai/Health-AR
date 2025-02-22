@@ -3,24 +3,47 @@ DASHBOARD_CSS = """
     .metric-container {
         background-color: #1E1E1E;
         border-radius: 10px;
-        padding: 8px;
-        margin: 4px 0px;
-        width: 160px;  /* Fixed width */
-        display: inline-block;  /* Make boxes flow side by side */
+        padding: 8px 12px;
+        margin: 2px 0;
+        width: 100%;
+        max-width: 400px;
+        height: 70px;
+        display: flex;
+        flex-direction: row;  /* Changed to row to put title on left */
+        align-items: center;  /* Center vertically */
+        gap: 20px;           /* Space between title and values */
+    }
+    .metric-values {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 20px;
+        flex-grow: 1;        /* Take remaining space */
+    }
+    .metric-group {
+        text-align: center;
+        min-width: 60px;
     }
     .primary-metric {
         font-size: 22px;
         font-weight: bold;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
     }
     .secondary-metric {
-        font-size: 12px;
+        font-size: 16px;
         color: #888;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+    }
+    .metric-label {
+        font-size: 11px;
+        color: #666;
+        margin-top: 2px;
+    }
+    .metric-title {
+        font-size: 13px;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        width: 80px;         /* Fixed width for title */
+        text-align: left;    /* Align text to left */
     }
     h3 {
         font-size: 14px;
