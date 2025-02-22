@@ -10,7 +10,7 @@ from garth.exc import GarthHTTPError
 from garminconnect import Garmin, GarminConnectAuthenticationError
 import warnings
 from etl import config
-from .garmin_tss_calculation import get_tss_data
+from etl.garmin_tss_calculation import get_tss_data
 
 warnings.filterwarnings('ignore', category=FutureWarning)
 
@@ -43,14 +43,14 @@ def get_garmin_data(garmin_client, start_date=None):
         
     api = garmin_client
     end_date = datetime.date.today()
-    data_file = config.GARMIN_DAILY_FILE  # Use config instead of hardcoded path
+    data_file = config.GARMIN_DAILY_FILE
     
     existing_data = None
     if os.path.exists(data_file):
         existing_data = pd.read_csv(data_file)
         if len(existing_data) > 0:
             last_date = pd.to_datetime(existing_data['date'].max()).date()
-            start_date = last_date - datetime.timedelta(days=7)
+            start_date = last_date - datetime.timedelta(days=2)
             existing_data = existing_data[existing_data['date'] < start_date.strftime('%Y-%m-%d')]
     
     data_list = []
@@ -170,9 +170,22 @@ def run_garmin_etl():
         tss_data = get_tss_data(df_activities)
 
     if df is not None:
+        # Check if TSS columns already exist
+        tss_cols = ['TSS', 'CTL', 'ATL', 'TSB']
+        if all(col in df.columns for col in tss_cols):
+            # Update only the last 2 days of TSS data
+            cutoff_date = (pd.Timestamp.today() - pd.Timedelta(days=2)).strftime('%Y-%m-%d')
+            # Keep old data for dates before cutoff
+            old_data = df[df['date'] < cutoff_date]
+            # Update recent data with new TSS values
+            recent_data = df[df['date'] >= cutoff_date].drop(tss_cols, axis=1)
+            recent_data = pd.merge(recent_data, tss_data, on='date', how='left')
+            # Combine old and updated data
+            df = pd.concat([old_data, recent_data]).sort_values('date')
+        else:
+            # First time adding TSS data
+            df = pd.merge(df, tss_data, on='date', how='left')
 
-        # join tss data with daily data
-        df = pd.merge(df, tss_data, on='date', how='left')
         df.to_csv(config.GARMIN_DAILY_FILE, index=False)
         logger.info(f'Garmin data saved to {config.GARMIN_DAILY_FILE}')
 

@@ -4,8 +4,8 @@ DASHBOARD_CSS = """
         background-color: #1E1E1E;
         border-radius: 10px;
         padding: 8px;
-        margin: 4px;
-        min-width: 120px;
+        margin: 4px 0px;
+        min-width: 60px;
         max-width: 160px;
     }
     .primary-metric {
@@ -34,7 +34,13 @@ DASHBOARD_CSS = """
     .level-1 { color: #FF4136; }
     [data-testid="stHorizontalBlock"] {
         gap: 0rem;
+        padding: 0 !important;
+        margin: 0 !important;
         justify-content: center;
+    }
+    div[data-testid="column"] {
+        padding: 0 !important;
+        margin: 0 !important;
     }
     </style>
 """ 
