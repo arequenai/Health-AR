@@ -5,8 +5,8 @@ DASHBOARD_CSS = """
         border-radius: 10px;
         padding: 8px;
         margin: 4px 0px;
-        min-width: 60px;
-        max-width: 160px;
+        width: 160px;  /* Fixed width */
+        display: inline-block;  /* Make boxes flow side by side */
     }
     .primary-metric {
         font-size: 22px;
@@ -36,11 +36,14 @@ DASHBOARD_CSS = """
         gap: 0rem;
         padding: 0 !important;
         margin: 0 !important;
-        justify-content: center;
+        justify-content: flex-start !important;  /* Align from left */
+        width: 340px !important;  /* Fixed width for two boxes + spacing */
     }
     div[data-testid="column"] {
         padding: 0 !important;
         margin: 0 !important;
+        width: 170px !important;  /* Fixed width for columns */
+        flex: none !important;  /* Prevent flex resizing */
     }
     </style>
 """ 

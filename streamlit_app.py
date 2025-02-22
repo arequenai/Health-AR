@@ -34,7 +34,7 @@ if metrics:
 # Update button and status message placeholder
 update_col, status_col = st.columns([1, 4])
 with update_col:
-    update_clicked = st.button("↻ Update", key="update_all")
+    update_clicked = st.button("↻", key="update_all")
 with status_col:
     status_placeholder = st.empty()
 
@@ -44,6 +44,6 @@ if update_clicked:
             run_garmin_etl()
             run_whoop_etl()
             run_mfp_etl()
-        status_placeholder.success("✓ Updated")
+        status_placeholder.success("✓")
     except Exception as e:
         status_placeholder.error(f"Update failed: {str(e)}")
