@@ -14,7 +14,9 @@ def get_metric_level(metric_name: str, value: float) -> int:
 def display_metric_box(title: str, primary: Dict[str, Any], 
                       secondary1: Dict[str, Any], secondary2: Dict[str, Any]) -> None:
     """Display a metric box with primary and secondary metrics."""
-    level = get_metric_level(title.lower(), primary['value'])
+    # Use color_value if available, otherwise use regular value
+    color_value = primary.get('color_value', primary['value'])
+    level = get_metric_level(title.lower(), color_value)
     with st.container():
         st.markdown(f"""
             <div class="metric-container">

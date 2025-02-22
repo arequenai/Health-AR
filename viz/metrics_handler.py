@@ -5,16 +5,33 @@ from etl import config
 def get_metrics() -> Optional[Dict[str, Dict[str, Dict[str, Any]]]]:
     """Get all metrics from various sources."""
     try:
+        # Read MFP daily data
+        df_mfp = pd.read_csv(config.MFP_DAILY_FILE)
+        latest_mfp = df_mfp.iloc[-1]
+
+        # Read Whoop data
+        df_whoop = pd.read_csv(config.WHOOP_SLEEP_RECOVERY_FILE)
+        latest_whoop = df_whoop.iloc[-1]
+
+        # Handle calories net label and value
+        calories_net = int(latest_mfp['calories_net'])
+        if calories_net > 0:
+            cal_label = 'kcal over'
+            cal_value = calories_net
+        else:
+            cal_label = 'kcal remaining'
+            cal_value = abs(calories_net)
+
         metrics = {
             'nutrition': {
-                'primary': {'value': 2100, 'label': 'kcal today'},  # From MFP
-                'secondary1': {'value': '75.5', 'label': 'kg'},     # Placeholder
-                'secondary2': {'value': '120', 'label': 'g protein'} # From MFP
+                'primary': {'value': cal_value, 'label': cal_label, 'color_value': calories_net},
+                'secondary1': {'value': '75.5', 'label': 'kg (placeholder)'},     # Placeholder
+                'secondary2': {'value': int(latest_mfp['protein']), 'label': 'g protein eaten'}
             },
             'recovery': {
-                'primary': {'value': 85, 'label': 'recovery'},      # From Whoop
-                'secondary1': {'value': '65', 'label': 'battery'},  # From Whoop
-                'secondary2': {'value': '45', 'label': 'stress'}    # From Whoop
+                'primary': {'value': int(latest_whoop['recovery_score']), 'label': 'recovery'},
+                'secondary1': {'value': '65', 'label': 'battery'},  # Still placeholder
+                'secondary2': {'value': '45', 'label': 'stress'}    # Still placeholder
             },
             'sleep': {
                 'primary': {'value': 88, 'label': 'quality'},       # From Whoop
@@ -39,4 +56,5 @@ def get_metrics() -> Optional[Dict[str, Dict[str, Dict[str, Any]]]]:
         }
         return metrics
     except Exception as e:
+        print(f"Error getting metrics: {e}")  # For debugging
         return None 

@@ -157,7 +157,7 @@ def get_meal_data(client, filename):
 
 # Function to get daily summary data from MyFitnessPal and append to a CSV file
 def get_meal_daily(client, filename):
-    end_date = datetime.datetime.now().date() - datetime.timedelta(days=1)
+    end_date = datetime.datetime.now().date()
     most_recent_date = get_most_recent_date(filename)
 
     # Handle first-time run or no data case
