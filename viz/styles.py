@@ -16,7 +16,7 @@ DASHBOARD_CSS = """
     .metric-values {
         display: flex;
         justify-content: space-between;
-        align-items: flex-start;
+        align-items: center;  /* Changed from flex-start to center */
         gap: 20px;
         flex-grow: 1;        /* Take remaining space */
     }
