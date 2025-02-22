@@ -201,18 +201,12 @@ def get_meal_daily(client, filename):
             logger.info(f'{filename}: Data per day obtained and (re-)written for {current_date.strftime("%Y-%m-%d")}')
             current_date += datetime.timedelta(days=1)
 
-def main():
-    try:
-        load_dotenv("Credentials.env")
-        client = init_mfp()
-        
-        get_meal_data(client, config.MFP_MEALS_FILE)
-        get_meal_daily(client, config.MFP_DAILY_FILE)
-        
-        logger.info("MyFitnessPal data updated successfully")
-    except Exception as e:
-        logger.error(f"Error in MyFitnessPal ETL: {str(e)}")
-        raise
+def run_mfp_etl():
+    """Execute MyFitnessPal ETL process."""
+    client = init_mfp()
+    get_meal_data(client, config.MFP_MEALS_FILE)
+    get_meal_daily(client, config.MFP_DAILY_FILE)
+    logger.info('MyFitnessPal data updated successfully')
 
 if __name__ == "__main__":
-    main()
+    run_mfp_etl()

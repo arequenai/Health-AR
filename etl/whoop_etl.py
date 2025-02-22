@@ -154,25 +154,16 @@ def get_sleep_recovery_data(client, start_date=None):
     logger.info("Completed Whoop data retrieval and processing")
     return df
 
-def main():
-   
-    # Load environment variables 
+def run_whoop_etl():
+    """Execute Whoop ETL process."""
     load_dotenv("Credentials.env")
     un = os.getenv("USERNAME_W")
     pw = os.getenv("PASSWORD_W")
-   
-    print("Logging in to Whoop")
     client = init_whoop(un, pw)
-
-    whoop_file = config.WHOOP_SLEEP_RECOVERY_FILE
-    start_date = config.DATA_START_DATE
-    df = get_sleep_recovery_data(client, start_date)
-    df.to_csv(whoop_file, index=False)
-    print('Sleep and recovery data cleaned and saved')
-   
-    journal_file_raw = config.WHOOP_JOURNAL_RAW_FILE
-    journal_file = config.WHOOP_JOURNAL_CLEAN_FILE
- #   get_journal_data(journal_file_raw, journal_file)
+    df = get_sleep_recovery_data(client)
+    if df is not None:
+        df.to_csv(config.WHOOP_SLEEP_RECOVERY_FILE, index=False)
+        logger.info(f'Whoop data saved to {config.WHOOP_SLEEP_RECOVERY_FILE}')
 
 if __name__ == "__main__":
-    main()
+    run_whoop_etl()

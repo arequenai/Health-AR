@@ -72,9 +72,16 @@ def get_garmin_data(garmin_client, start_date=None):
     df = df.sort_values('date').drop_duplicates(subset=['date'], keep='last')
     return df
 
-if __name__ == "__main__":
-    garmin_client = init_garmin(email, password)
-    df = get_garmin_data(garmin_client)
+def run_garmin_etl():
+    """Execute Garmin ETL process."""
+    load_dotenv("Credentials.env")
+    email = os.getenv("USERNAME_G")
+    password = os.getenv("PASSWORD_G")
+    client = init_garmin(email, password)
+    df = get_garmin_data(client)
     if df is not None:
-        df.to_csv(config.GARMIN_DAILY_FILE, index=False)  # Use config
+        df.to_csv(config.GARMIN_DAILY_FILE, index=False)
         logger.info(f'Garmin data saved to {config.GARMIN_DAILY_FILE}')
+
+if __name__ == "__main__":
+    run_garmin_etl()
