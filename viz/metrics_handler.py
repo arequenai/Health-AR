@@ -19,13 +19,19 @@ def get_metrics() -> Optional[Dict[str, Dict[str, Dict[str, Any]]]]:
         # Calculate last 7 days distance in km
         last_7d_distance = df_garmin.tail(7)['totalDistanceMeters'].sum() / 1000
 
+        # Format sleep time
+        sleep_hours = latest_garmin['sleepingSeconds'] / 3600  # Convert seconds to hours
+        sleep_hrs = int(sleep_hours)
+        sleep_mins = int((sleep_hours - sleep_hrs) * 60)
+        sleep_time = f"{sleep_hrs}:{sleep_mins:02d}"
+
         # Handle calories net label and value
         calories_net = int(latest_mfp['calories_net'])
         if calories_net > 0:
             cal_label = 'kcal over'
             cal_value = calories_net
         else:
-            cal_label = 'kcal remaining'
+            cal_label = 'kcal rem'
             cal_value = abs(calories_net)
 
         metrics = {
@@ -36,17 +42,17 @@ def get_metrics() -> Optional[Dict[str, Dict[str, Dict[str, Any]]]]:
             },
             'recovery': {
                 'primary': {'value': int(latest_whoop['recovery_score']), 'label': 'recovery'},
-                'secondary1': {'value': '65', 'label': 'battery'},  # Still placeholder
-                'secondary2': {'value': '45', 'label': 'stress'}    # Still placeholder
+                'secondary1': {'value': int(latest_garmin['bodyBatteryMostRecentValue']), 'label': 'battery'},
+                'secondary2': {'value': int(latest_garmin['stressPercentage']), 'label': 'stress'}
             },
             'sleep': {
-                'primary': {'value': 88, 'label': 'quality'},       # From Whoop
-                'secondary1': {'value': '7:30', 'label': 'in bed'}, # From Whoop
-                'secondary2': {'value': 'Good', 'label': 'behavior'} # From Whoop Journal
+                'primary': {'value': int(latest_garmin['bodyBatteryDuringSleep']), 'label': 'quality'},
+                'secondary1': {'value': sleep_time, 'label': 'hrs in bed'},
+                'secondary2': {'value': 'Good', 'label': 'behavior'} # Still placeholder
             },
             'running': {
-                'primary': {'value': -5, 'label': 'TSB'},          # Still placeholder
-                'secondary1': {'value': '45', 'label': 'CTL'},     # Still placeholder
+                'primary': {'value': int(latest_garmin['TSB']), 'label': 'TSB'},
+                'secondary1': {'value': int(latest_garmin['CTL']), 'label': 'CTL'}, # Not a placeholder, but CTL calculation is wrong
                 'secondary2': {'value': f"{last_7d_distance:.1f}", 'label': 'km L7D'}
             },
             'strength': {
