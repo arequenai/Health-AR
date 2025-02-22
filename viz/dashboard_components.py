@@ -1,11 +1,33 @@
 import streamlit as st
 from typing import Dict, Any
 
-def get_metric_level(metric_name: str, value: float) -> int:
+def get_metric_level(metric_name: str, value: float | str) -> int:
     """Determine color level based on metric value."""
     from viz.metric_thresholds import METRIC_THRESHOLDS
     thresholds = METRIC_THRESHOLDS[metric_name]
     
+    # Special handling for marathon prediction times (HH:MM format)
+    if metric_name == 'running':
+        # Convert value and thresholds to minutes for comparison
+        hours, mins = value.split(':')
+        value_mins = int(hours) * 60 + int(mins)
+        
+        for level in range(5, 0, -1):
+            threshold = thresholds[str(level)]
+            t_hours, t_mins = threshold.split(':')
+            threshold_mins = int(t_hours) * 60 + int(t_mins)
+            if value_mins <= threshold_mins:
+                return level
+        return 1
+    
+    # Special handling for nutrition where lower is better
+    if metric_name == 'nutrition':
+        for level in range(5, 0, -1):
+            if float(value) <= float(thresholds[str(level)]):
+                return level
+        return 1
+    
+    # Normal handling for other metrics where higher is better
     for level in range(5, 0, -1):
         if float(value) >= float(thresholds[str(level)]):
             return level

@@ -19,4 +19,3 @@ WHOOP_JOURNAL_CLEAN_FILE = f'{DATA_DIR}/journal.csv'
 
 MFP_MEALS_FILE = f'{DATA_DIR}/mfp_meals.csv'
 MFP_DAILY_FILE = f'{DATA_DIR}/mfp_daily.csv'
-

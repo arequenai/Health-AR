@@ -58,8 +58,23 @@ def get_garmin_data(garmin_client, start_date=None):
     while current_date <= end_date:
         try:
             stats = api.get_stats(current_date)
+            race_predictor = api.get_race_predictions(startdate=current_date, enddate=current_date, _type='daily')
+            
             data_dict = {'date': current_date.strftime('%Y-%m-%d')}
             data_dict.update(stats)
+
+            # Add race predictions if available
+            if race_predictor and len(race_predictor) > 0:
+                race_data = race_predictor[0]  # Get first (and only) prediction
+                # Convert seconds to HH:MM format for each distance
+                for race in ['time5K', 'time10K', 'timeHalfMarathon', 'timeMarathon']:
+                    if race in race_data:
+                        seconds = race_data[race]
+                        hours = int(seconds // 3600)
+                        minutes = int((seconds % 3600) // 60)
+                        prediction = f"{hours}:{minutes:02d}"
+                        data_dict[f'{race[4:]}_prediction'] = prediction
+
             data_list.append(data_dict)
         except Exception as e:
             logger.warning(f"Failed to get data for {current_date}: {str(e)}")
@@ -71,6 +86,7 @@ def get_garmin_data(garmin_client, start_date=None):
         df = pd.concat([existing_data, df], ignore_index=True)
     df['date'] = pd.to_datetime(df['date']).dt.strftime('%Y-%m-%d')
     df = df.sort_values('date').drop_duplicates(subset=['date'], keep='last')
+
     return df
 
 def get_garmin_activities(garmin_client, start_date=datetime.date(2024, 3, 16)):
