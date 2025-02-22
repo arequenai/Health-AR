@@ -13,6 +13,12 @@ def get_metrics() -> Optional[Dict[str, Dict[str, Dict[str, Any]]]]:
         df_whoop = pd.read_csv(config.WHOOP_SLEEP_RECOVERY_FILE)
         latest_whoop = df_whoop.iloc[-1]
 
+        # Read Garmin data
+        df_garmin = pd.read_csv(config.GARMIN_DAILY_FILE)
+        latest_garmin = df_garmin.iloc[-1]
+        # Calculate last 7 days distance in km
+        last_7d_distance = df_garmin.tail(7)['totalDistanceMeters'].sum() / 1000
+
         # Handle calories net label and value
         calories_net = int(latest_mfp['calories_net'])
         if calories_net > 0:
@@ -39,9 +45,9 @@ def get_metrics() -> Optional[Dict[str, Dict[str, Dict[str, Any]]]]:
                 'secondary2': {'value': 'Good', 'label': 'behavior'} # From Whoop Journal
             },
             'running': {
-                'primary': {'value': -5, 'label': 'TSB'},          # Calculated
-                'secondary1': {'value': '45', 'label': 'CTL'},     # Calculated
-                'secondary2': {'value': '35', 'label': 'km L7D'}   # From Garmin
+                'primary': {'value': -5, 'label': 'TSB'},          # Still placeholder
+                'secondary1': {'value': '45', 'label': 'CTL'},     # Still placeholder
+                'secondary2': {'value': f"{last_7d_distance:.1f}", 'label': 'km L7D'}
             },
             'strength': {
                 'primary': {'value': 3, 'label': 'days since'},    # Placeholder
