@@ -36,6 +36,7 @@ if update_clicked:
             run_garmin_etl()
             run_whoop_etl()
             run_mfp_etl()
+            st.rerun() # Refresh metrics after ETL
         status_placeholder.success("✓")
     except Exception as e:
         status_placeholder.error(f"Update failed: {str(e)}")
