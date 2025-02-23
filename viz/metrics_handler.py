@@ -51,8 +51,8 @@ def get_metrics() -> Optional[Dict[str, Dict[str, Dict[str, Any]]]]:
             },
             'recovery': {
                 'primary': {'value': int(latest_whoop['recovery_score']), 'label': 'recovery'},
-                'secondary1': {'value': int(latest_garmin['bodyBatteryMostRecentValue']), 'label': 'battery'},
-                'secondary2': {'value': int(latest_garmin['stressPercentage']), 'label': 'stress'}
+                'secondary1': {'value': int(latest_garmin['bodyBatteryMostRecentValue']), 'label': 'battery now'},
+                'secondary2': {'value': int(latest_garmin['averageStressLevel']), 'label': 'stress'}
             },
             'sleep': {
                 'primary': {'value': int(latest_garmin['sleep_score']), 'label': 'sleep'},
