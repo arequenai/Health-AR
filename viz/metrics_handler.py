@@ -50,12 +50,12 @@ def get_metrics() -> Optional[Dict[str, Dict[str, Dict[str, Any]]]]:
                 'secondary2': {'value': int(latest_garmin['stressPercentage']), 'label': 'stress'}
             },
             'sleep': {
-                'primary': {'value': int(latest_garmin['bodyBatteryDuringSleep']), 'label': 'sleep'},
+                'primary': {'value': int(latest_garmin['sleep_score']), 'label': 'sleep'},
                 'secondary1': {'value': sleep_time, 'label': 'hrs in bed'},
                 'secondary2': {'value': '-', 'label': 'behavior'} # Still placeholder
             },
             'running': {
-                'primary': {'value': latest_garmin['Marathon_prediction'], 'label': 'marathon'},
+                'primary': {'value': int(latest_garmin['TSB']), 'label': 'TSB'},
                 'secondary1': {'value': f"{last_7d_distance:.1f}", 'label': 'km L7d'},
                 'secondary2': {'value': f"{int(last_7d_altitude)}", 'label': 'm gain L7d'}
             },

@@ -3,6 +3,7 @@
 from datetime import datetime, date
 
 # Start date for all data collection
+# DATA_START_DATE = date(2025, 2, 22)
 DATA_START_DATE = date(2024, 3, 16)
 
 # File paths

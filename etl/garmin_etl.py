@@ -10,10 +10,11 @@ from garth.exc import GarthHTTPError
 from garminconnect import Garmin, GarminConnectAuthenticationError
 import warnings
 from etl import config
-from etl.garmin_tss_calculation import get_tss_data
+import numpy as np
 
 warnings.filterwarnings('ignore', category=FutureWarning)
 
+# Change logging level to INFO
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -32,12 +33,7 @@ def init_garmin(email, password):
     return garmin
 
 def get_garmin_data(garmin_client, start_date=None):
-    """Get Garmin data.
-    
-    Args:
-        garmin_client: Garmin client
-        start_date: Optional start date, defaults to config.DATA_START_DATE
-    """
+    """Get Garmin data."""
     if start_date is None:
         start_date = config.DATA_START_DATE
         
@@ -65,8 +61,7 @@ def get_garmin_data(garmin_client, start_date=None):
 
             # Add race predictions if available
             if race_predictor and len(race_predictor) > 0:
-                race_data = race_predictor[0]  # Get first (and only) prediction
-                # Convert seconds to HH:MM format for each distance
+                race_data = race_predictor[0]
                 for race in ['time5K', 'time10K', 'timeHalfMarathon', 'timeMarathon']:
                     if race in race_data:
                         seconds = race_data[race]
@@ -75,17 +70,109 @@ def get_garmin_data(garmin_client, start_date=None):
                         prediction = f"{hours}:{minutes:02d}"
                         data_dict[f'{race[4:]}_prediction'] = prediction
 
+            # Add sleep score if available
+            try:
+                formatted_date = current_date.strftime('%Y-%m-%d')
+                sleep_data = api.get_sleep_data(formatted_date)
+                
+                if sleep_data and 'dailySleepDTO' in sleep_data:
+                    sleep_dto = sleep_data['dailySleepDTO']
+                    if 'sleepScores' in sleep_dto:
+                        scores = sleep_dto['sleepScores']
+                        # Get overall score if available
+                        if 'overall' in scores:
+                            sleep_score = scores['overall'].get('value', 0)
+                            data_dict['sleep_score'] = sleep_score
+                        else:
+                            data_dict['sleep_score'] = 0
+                    else:
+                        data_dict['sleep_score'] = 0
+                else:
+                    data_dict['sleep_score'] = 0
+            except Exception as e:
+                logger.warning(f"Failed to get sleep data for {current_date}: {str(e)}")
+                data_dict['sleep_score'] = 0
+
             data_list.append(data_dict)
         except Exception as e:
             logger.warning(f"Failed to get data for {current_date}: {str(e)}")
         current_date += datetime.timedelta(days=1)
-    
+
     df = pd.DataFrame(data_list)
+    
+    # Get activities and calculate daily training load
+    try:
+        activities = api.get_activities_by_date(start_date, end_date)
+        activity_data = []
+        for activity in activities:
+            activity_date = pd.to_datetime(activity['startTimeLocal']).date().strftime('%Y-%m-%d')
+            activity_dict = {
+                'date': activity_date,
+                'training_load': activity.get('activityTrainingLoad', 0)
+            }
+            activity_data.append(activity_dict)
+            
+        if activity_data:
+            activities_df = pd.DataFrame(activity_data)
+            daily_load = activities_df.groupby('date')['training_load'].sum().reset_index()
+            
+            # Merge with daily stats
+            df = pd.merge(df, daily_load, on='date', how='left')
+            df['training_load'] = df['training_load'].fillna(0)
+    except Exception as e:
+        logger.warning(f"Failed to process activities: {str(e)}")
+
     df.fillna(0, inplace=True)
     if existing_data is not None:
         df = pd.concat([existing_data, df], ignore_index=True)
     df['date'] = pd.to_datetime(df['date']).dt.strftime('%Y-%m-%d')
     df = df.sort_values('date').drop_duplicates(subset=['date'], keep='last')
+    
+    # After merging training_load data
+    try:
+        # Ensure training_load exists and is 0 where missing
+        df['training_load'] = df['training_load'].fillna(0)
+        
+        # Create warmup period with zeros (42 days before our first date)
+        first_date = pd.to_datetime(df['date'].min())
+        warmup_dates = pd.date_range(end=first_date - pd.Timedelta(days=1), periods=42)
+        warmup_df = pd.DataFrame({
+            'date': warmup_dates.strftime('%Y-%m-%d'),
+            'training_load': [0] * 42
+        })
+        
+        # Combine warmup and actual data
+        df_with_warmup = pd.concat([warmup_df, df]).sort_values('date')
+        
+        # Calculate CTL and ATL using exponential decay
+        ctl_decay = np.exp(-1/42)  # 42-day time constant for CTL
+        atl_decay = np.exp(-1/7)   # 7-day time constant for ATL
+        
+        # Initialize arrays
+        loads = df_with_warmup['training_load'].values
+        ctl = np.zeros(len(loads))
+        atl = np.zeros(len(loads))
+        
+        # Calculate CTL and ATL
+        for i in range(1, len(loads)):
+            ctl[i] = loads[i] * (1 - ctl_decay) + ctl[i-1] * ctl_decay
+            atl[i] = loads[i] * (1 - atl_decay) + atl[i-1] * atl_decay
+        
+        # Add to dataframe
+        df_with_warmup['CTL'] = ctl
+        df_with_warmup['ATL'] = atl
+        df_with_warmup['TSB'] = df_with_warmup['CTL'] - df_with_warmup['ATL']
+        
+        # Keep only the actual data period
+        df = df_with_warmup[df_with_warmup['date'].isin(df['date'])].copy()
+        
+        # Round the values
+        df['CTL'] = df['CTL'].round(1)
+        df['ATL'] = df['ATL'].round(1)
+        df['TSB'] = df['TSB'].round(1)
+        
+    except Exception as e:
+        logger.warning(f"Failed to calculate training metrics: {str(e)}")
 
     return df
 
@@ -115,7 +202,7 @@ def get_garmin_activities(garmin_client, start_date=datetime.date(2024, 3, 16)):
             existing_data = None
     else:
         logger.info("No existing data found, pulling all data since March 16, 2024")
-        start_date = datetime.date(2024, 3, 16)
+        start_date = config.DATA_START_DATE
         existing_data = None
     
     logger.info(f"Getting Garmin activities from {start_date} to {end_date}")
@@ -181,26 +268,6 @@ def run_garmin_etl():
         # Save activities data
         df_activities.to_csv(config.GARMIN_ACTIVITIES_FILE, index=False)
         logger.info(f'Garmin activities saved to {config.GARMIN_ACTIVITIES_FILE}')
-
-        # Calculate TSS metrics
-        tss_data = get_tss_data(df_activities)
-
-    if df is not None:
-        # Check if TSS columns already exist
-        tss_cols = ['TSS', 'CTL', 'ATL', 'TSB']
-        if all(col in df.columns for col in tss_cols):
-            # Update only the last 2 days of TSS data
-            cutoff_date = (pd.Timestamp.today() - pd.Timedelta(days=2)).strftime('%Y-%m-%d')
-            # Keep old data for dates before cutoff
-            old_data = df[df['date'] < cutoff_date]
-            # Update recent data with new TSS values
-            recent_data = df[df['date'] >= cutoff_date].drop(tss_cols, axis=1)
-            recent_data = pd.merge(recent_data, tss_data, on='date', how='left')
-            # Combine old and updated data
-            df = pd.concat([old_data, recent_data]).sort_values('date')
-        else:
-            # First time adding TSS data
-            df = pd.merge(df, tss_data, on='date', how='left')
 
         df.to_csv(config.GARMIN_DAILY_FILE, index=False)
         logger.info(f'Garmin data saved to {config.GARMIN_DAILY_FILE}')
