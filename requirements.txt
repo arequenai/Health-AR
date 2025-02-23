@@ -6,3 +6,5 @@ streamlit
 whoop
 myfitnesspal
 setuptools
+fitbit
+numpy
