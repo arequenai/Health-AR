@@ -2,7 +2,7 @@ import streamlit as st
 from viz.dashboard_components import display_metric_box
 from viz.metrics_handler import get_metrics
 from viz.styles import DASHBOARD_CSS
-from etl import run_garmin_etl, run_whoop_etl, run_mfp_etl, run_fitbit_etl, run_jefit_etl
+from etl import run_garmin_etl, run_whoop_etl, run_mfp_etl
 
 # Set page config
 st.set_page_config(
@@ -36,8 +36,6 @@ if update_clicked:
             run_garmin_etl()
             run_whoop_etl()
             run_mfp_etl()
-            run_fitbit_etl()
-            run_jefit_etl()
             st.rerun() # Refresh metrics after ETL
         status_placeholder.success("✓")
     except Exception as e:

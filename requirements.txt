@@ -6,6 +6,4 @@ streamlit
 whoop
 myfitnesspal
 setuptools
-fitbit
 numpy
-beautifulsoup4
