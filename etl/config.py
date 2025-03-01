@@ -22,3 +22,5 @@ MFP_MEALS_FILE = f'{DATA_DIR}/mfp_meals.csv'
 MFP_DAILY_FILE = f'{DATA_DIR}/mfp_daily.csv'
 
 FITBIT_MEASUREMENTS_FILE = f'{DATA_DIR}/fitbit.csv'
+
+JEFIT_WORKOUTS_FILE = f'{DATA_DIR}/jefit_workouts.csv'

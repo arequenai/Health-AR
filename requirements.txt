@@ -8,3 +8,4 @@ myfitnesspal
 setuptools
 fitbit
 numpy
+beautifulsoup4
