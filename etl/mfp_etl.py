@@ -208,5 +208,11 @@ def run_mfp_etl():
     get_meal_daily(client, config.MFP_DAILY_FILE)
     logger.info('MyFitnessPal data updated successfully')
 
+def run_mfp_daily_only():
+    """Execute MyFitnessPal ETL process for daily data only (faster)."""
+    client = init_mfp()
+    get_meal_daily(client, config.MFP_DAILY_FILE)
+    logger.info('MyFitnessPal daily data updated successfully')
+
 if __name__ == "__main__":
     run_mfp_etl()

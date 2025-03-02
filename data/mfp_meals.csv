@@ -3390,7 +3390,59 @@ date,meal,food,quant,calories,carbs,fat,protein,sodium,sugar
 2025-02-23,breakfast,"Miel abeja - Miel, 0.7 cuchara",0.7,35.0,9.0,0.0,0.0,0.0,8.0
 2025-02-23,lunch,"Homemade - Patatas Fritas, 110.0 gr",110.0,286.0,20.0,22.0,3.0,165.0,0.0
 2025-02-23,lunch,"Home - Hamburguesa, 2.6 piece",2.6,1287.0,104.0,65.0,70.0,0.0,0.0
+2025-02-23,dinner,"Contramuslo pollo - Contramuslo pollo, 200 g",200,260.0,0.0,11.0,40.0,0.0,0.0
+2025-02-23,dinner,"Aceite Oliva - Aceite Oliva 7ml, 12 milliliter",12,103.0,0.0,12.0,0.0,0.0,0.0
+2025-02-23,dinner,"Atun - Atún natural, 60 gramo",60,61.0,0.0,0.0,15.0,0.0,0.0
+2025-02-23,dinner,"Tomato, 2 medium",2,44.0,10.0,0.0,2.0,12.0,6.0
+2025-02-23,dinner,"Pimiento piquillo ecologico Emperatriz - pimiento piquillo, 250 gram",250,104.0,20.0,1.0,3.0,0.0,14.0
 2025-02-23,snacks,"Maurten - Gel100, 120 gramos",120,300.0,75.0,0.0,0.0,255.0,75.0
 2025-02-23,snacks,"nature valley - oat and honey, 21 grams",21,98.0,14.0,4.0,2.0,0.0,0.0
 2025-02-23,snacks,"Empanada - Empanada atun, 60 gr",60,167.0,15.0,10.0,4.0,0.0,2.0
 2025-02-23,snacks,"226ers - Recovery Drink ""vainilla"", 50 Gr",50,194.0,22.0,4.0,23.0,0.0,0.0
+2025-02-24,breakfast,"Silueta - Pan integral cereales sin corteza, 28 gramo",28,68.0,11.0,1.0,4.0,0.0,0.0
+2025-02-24,breakfast,"Generic - Huevo A La Plancha, 1.9 huevo",1.9,190.0,1.0,8.0,11.0,118.0,1.0
+2025-02-24,breakfast,"Casera - Tortita Avena, 35 1/2 gramos",35,91.0,9.0,1.0,3.0,0.0,0.0
+2025-02-24,lunch,"Ensalada Polllo Ofi Bain, 1.1 serving",1.1,611.0,27.0,38.0,41.0,73.0,7.0
+2025-02-24,dinner,"redondo ternera - redondo ternera, 100 gramo",100,128.0,3.0,6.0,15.0,2.0,1.0
+2025-02-24,dinner,"Salsa Cebolla Caramelizada - Salsa Cebolla Caramelizada, 75 gramo",75,249.0,18.0,20.0,0.0,0.0,0.0
+2025-02-24,dinner,"Arroz Blanco - Arroz Blanco Cocido, 200 gram",200,371.0,80.0,1.0,8.0,1049.0,0.0
+2025-02-24,dinner,"Empanada - Empanada atun, 60 gr",60,167.0,15.0,10.0,4.0,0.0,2.0
+2025-02-24,snacks,"Chocolate 70% Lindt - Chocolate 70% Lindt, 18 gram",18,102.0,6.0,7.0,2.0,18.0,5.0
+2025-02-25,breakfast,"Generic - Huevo A La Plancha, 2 huevo",2,200.0,1.0,9.0,11.0,124.0,1.0
+2025-02-25,breakfast,"Roig - Clara de huevo, 70 gr",70,35.0,1.0,0.0,7.0,0.0,1.0
+2025-02-25,breakfast,"Pan - Pan Blanco ✓, 40 g",40,102.0,22.0,0.0,3.0,200.0,2.0
+2025-02-25,lunch,"Ensalada Polllo Ofi Bain, 0.65 serving",0.65,361.0,16.0,23.0,24.0,43.0,4.0
+2025-02-25,lunch,"Supersol - Tortilla De Patatas, 180 g",180,243.0,27.0,11.0,7.0,0.0,0.0
+2025-02-25,lunch,"Pan - Pan Blanco ✓, 40 g",40,102.0,22.0,0.0,3.0,200.0,2.0
+2025-02-25,dinner,"Pasta bolognese - Pasta bolognese, 75 gr",75,89.0,13.0,2.0,4.0,0.0,0.0
+2025-02-25,dinner,"Arroz Blanco - Arroz Blanco Cocido, 200 gram",200,371.0,80.0,1.0,8.0,1049.0,0.0
+2025-02-25,dinner,"familymart - mapu tofu, 1.6 package",1.6,811.0,16.0,16.0,16.0,0.0,0.0
+2025-02-26,breakfast,"Pan - Pan Blanco ✓, 25 g",25,64.0,14.0,0.0,2.0,125.0,1.0
+2025-02-26,breakfast,"Supersol - Tortilla De Patatas, 220.0 g",220.0,297.0,33.0,13.0,9.0,0.0,0.0
+2025-02-26,lunch,"Ensalada Polllo Ofi Bain, 1 serving",1,556.0,24.0,35.0,38.0,66.0,7.0
+2025-02-26,dinner,"familymart - mapu tofu, 1.2 package",1.2,608.0,12.0,12.0,12.0,0.0,0.0
+2025-02-26,dinner,"Arroz Blanco - Arroz Blanco Cocido, 160 gram",160,297.0,64.0,1.0,6.0,839.0,0.0
+2025-02-26,snacks,"IKEA Macedonia - Macedonia de frutas, 100 g",100,48.0,11.0,0.0,1.0,0.0,0.0
+2025-02-26,snacks,"Ethiquable - chocolate 98%, 10 gramo",10,62.0,1.0,5.0,1.0,0.0,0.0
+2025-02-27,breakfast,"Pan - Pan Blanco ✓, 25 g",25,64.0,14.0,0.0,2.0,125.0,1.0
+2025-02-27,breakfast,"Supersol - Tortilla De Patatas, 220.0 g",220.0,297.0,33.0,13.0,9.0,0.0,0.0
+2025-02-27,lunch,"Five Guys - Hamburguesa doble Alberto, 1 hamburguesa",1,659.0,44.0,36.0,44.0,1410.0,10.0
+2025-02-27,lunch,"Homemade - Patatas Fritas, 150 gr",150,390.0,27.0,30.0,4.0,225.0,0.0
+2025-02-27,dinner,"Empanada - Empanada atun, 300 gr",300,837.0,75.0,48.0,22.0,0.0,11.0
+2025-02-28,breakfast,"Pan - Pan Blanco ✓, 25 g",25,64.0,14.0,0.0,2.0,125.0,1.0
+2025-02-28,breakfast,"Supersol - Tortilla De Patatas, 220.0 g",220.0,297.0,33.0,13.0,9.0,0.0,0.0
+2025-02-28,lunch,"Generic - Bocadillo De Calamares, 1 bocadillo",1,473.0,65.0,15.0,18.0,764.0,1.0
+2025-02-28,lunch,"Cocido - Cocido madrileño, 750 g",750,408.0,43.0,20.0,15.0,0.0,0.0
+2025-02-28,dinner,"Morcilla de arroz - Morcilla, 90 gramo",90,256.0,15.0,19.0,5.0,0.0,0.0
+2025-02-28,dinner,"Homemade - Patatas Fritas, 150 gr",150,390.0,27.0,30.0,4.0,225.0,0.0
+2025-02-28,dinner,"Paletiilla cordero - Paletiilla cordero, 300 gramos",300,495.0,0.0,35.0,54.0,0.0,0.0
+2025-02-28,dinner,"Generic - Vino Tinto, 1 Copa 150 Cc., 2 copa 150 gr.",2,214.0,1.0,0.0,1.0,12.0,0.0
+2025-02-28,dinner,"Pan - Pan Blanco ✓, 60 g",60,153.0,33.0,0.0,4.0,300.0,3.0
+2025-03-01,breakfast,"Supersol - Tortilla De Patatas, 170 g",170,230.0,26.0,10.0,7.0,0.0,0.0
+2025-03-01,breakfast,"Pan - Pan Blanco ✓, 60 g",60,153.0,33.0,0.0,4.0,300.0,3.0
+2025-03-01,breakfast,"Ali Oli Auchan - Salsa Ali Oli, 1 cucharadita",1,50.0,0.0,6.0,0.0,104.0,0.0
+2025-03-01,lunch,"Yum Yum - Shrimp (Tom Yum), 60 grams",60,280.0,37.0,11.0,5.0,1440.0,4.0
+2025-03-01,lunch,"Arroz Blanco - Arroz Blanco Cocido, 160 gram",160,297.0,64.0,1.0,6.0,839.0,0.0
+2025-03-01,lunch,"Curry Rojo, 1.5 taza",1.5,461.0,22.0,29.0,32.0,739.0,7.0
+2025-03-01,lunch,"Krapao - Thai, 0.5 bowl",0.5,299.0,35.0,8.0,20.0,0.0,0.0
+2025-03-01,snacks,"226ERS - Isolate protein, 30 g",30,110.0,1.0,0.0,26.0,0.0,0.0

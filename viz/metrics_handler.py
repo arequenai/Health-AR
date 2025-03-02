@@ -9,11 +9,6 @@ def get_metrics() -> Optional[Dict[str, Dict[str, Dict[str, Any]]]]:
         df_mfp = pd.read_csv(config.MFP_DAILY_FILE)
         latest_mfp = df_mfp.iloc[-1]
 
-        # Read Fitbit data for weight
-        df_fitbit = pd.read_csv(config.FITBIT_MEASUREMENTS_FILE)
-        latest_weight_lbs = df_fitbit.iloc[-1]['weight']
-        latest_weight_kg = round(latest_weight_lbs * 0.45359237, 1)  # Convert lbs to kg
-
         # Calculate last 7 days net calories
         l7d_net_calories = int(df_mfp.tail(7)['calories_net'].sum())
 
@@ -47,7 +42,7 @@ def get_metrics() -> Optional[Dict[str, Dict[str, Dict[str, Any]]]]:
             'nutrition': {
                 'primary': {'value': abs(calories_net), 'label': cal_label, 'color_value': calories_net},
                 'secondary1': {'value': l7d_net_calories, 'label': 'net above L7d'},
-                'secondary2': {'value': latest_weight_kg, 'label': 'kg'}
+                'secondary2': {'value': int(latest_mfp['protein']), 'label': 'protein g'}
             },
             'recovery': {
                 'primary': {'value': int(latest_whoop['recovery_score']), 'label': 'recovery'},

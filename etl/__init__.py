@@ -3,7 +3,7 @@
 
 from .garmin_etl import init_garmin, get_garmin_data, run_garmin_etl
 from .whoop_etl import init_whoop, get_sleep_recovery_data, run_whoop_etl
-from .mfp_etl import init_mfp, get_meal_data, get_meal_daily, run_mfp_etl
+from .mfp_etl import init_mfp, get_meal_data, get_meal_daily, run_mfp_etl, run_mfp_daily_only
 
 __all__ = [
     'init_garmin', 
@@ -16,4 +16,5 @@ __all__ = [
     'get_meal_data',
     'get_meal_daily',
     'run_mfp_etl',
+    'run_mfp_daily_only',
 ] 

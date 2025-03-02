@@ -21,6 +21,16 @@ logger = logging.getLogger(__name__)
 email = os.getenv("USERNAME_G")
 password = os.getenv("PASSWORD_G")
 
+# Define essential fields to keep
+ESSENTIAL_FIELDS = [
+    # Currently used
+    'totalDistanceMeters', 'floorsAscendedInMeters', 'sleepingSeconds',
+    'bodyBatteryMostRecentValue', 'averageStressLevel',
+    # Important for future use
+    'restingHeartRate', 'maxHeartRate', 'intensityMinutes',
+    'activeKilocalories', 'totalSteps', 'floorsAscended'
+]
+
 def init_garmin(email, password):
     tokenstore = os.getenv("GARMINTOKENS") or "~/.garminconnect"
     try:
@@ -46,8 +56,17 @@ def get_garmin_data(garmin_client, start_date=None):
         existing_data = pd.read_csv(data_file)
         if len(existing_data) > 0:
             last_date = pd.to_datetime(existing_data['date'].max()).date()
-            start_date = last_date - datetime.timedelta(days=2)
+            start_date = last_date
             existing_data = existing_data[existing_data['date'] < start_date.strftime('%Y-%m-%d')]
+    
+    # Check if today's data already exists with sleep score
+    today_str = end_date.strftime('%Y-%m-%d')
+    today_data_exists = False
+    if existing_data is not None and today_str in existing_data['date'].values:
+        today_row = existing_data[existing_data['date'] == today_str]
+        if 'sleep_score' in today_row.columns and today_row['sleep_score'].iloc[0] > 0:
+            today_data_exists = True
+            logger.info(f"Today's sleep score already exists, skipping sleep data retrieval")
     
     data_list = []
     current_date = start_date
@@ -57,7 +76,9 @@ def get_garmin_data(garmin_client, start_date=None):
             race_predictor = api.get_race_predictions(startdate=current_date, enddate=current_date, _type='daily')
             
             data_dict = {'date': current_date.strftime('%Y-%m-%d')}
-            data_dict.update(stats)
+            # Only keep essential fields
+            for field in ESSENTIAL_FIELDS:
+                data_dict[field] = stats.get(field, 0)
 
             # Add race predictions if available
             if race_predictor and len(race_predictor) > 0:
@@ -70,28 +91,12 @@ def get_garmin_data(garmin_client, start_date=None):
                         prediction = f"{hours}:{minutes:02d}"
                         data_dict[f'{race[4:]}_prediction'] = prediction
 
-            # Add sleep score if available
-            try:
-                formatted_date = current_date.strftime('%Y-%m-%d')
-                sleep_data = api.get_sleep_data(formatted_date)
-                
-                if sleep_data and 'dailySleepDTO' in sleep_data:
-                    sleep_dto = sleep_data['dailySleepDTO']
-                    if 'sleepScores' in sleep_dto:
-                        scores = sleep_dto['sleepScores']
-                        # Get overall score if available
-                        if 'overall' in scores:
-                            sleep_score = scores['overall'].get('value', 0)
-                            data_dict['sleep_score'] = sleep_score
-                        else:
-                            data_dict['sleep_score'] = 0
-                    else:
-                        data_dict['sleep_score'] = 0
-                else:
-                    data_dict['sleep_score'] = 0
-            except Exception as e:
-                logger.warning(f"Failed to get sleep data for {current_date}: {str(e)}")
-                data_dict['sleep_score'] = 0
+            # Only get sleep score if we need it (not today or today's data doesn't exist yet)
+            if current_date != end_date or not today_data_exists:
+                data_dict['sleep_score'] = get_sleep_score(api, current_date)
+            else:
+                # Skip sleep API call for today if we already have it
+                data_dict['sleep_score'] = 0  # Will be filled from existing data later
 
             data_list.append(data_dict)
         except Exception as e:
@@ -190,7 +195,7 @@ def get_garmin_activities(garmin_client, start_date=datetime.date(2024, 3, 16)):
         if len(existing_data) > 0:
             # If we have data, start from the last date minus 2 days
             last_date = pd.to_datetime(existing_data['date'].max()).date()
-            start_date = last_date - datetime.timedelta(days=2)
+            start_date = last_date
             logger.info(f"Found existing data, pulling from {start_date} onwards")
             
             # Remove the last week of data from existing_data to avoid duplicates
@@ -254,6 +259,32 @@ def get_garmin_activities(garmin_client, start_date=datetime.date(2024, 3, 16)):
     df['date'] = df['date'].dt.strftime('%Y-%m-%d')
     
     return df
+
+def get_sleep_score(api, date):
+    """Get only the sleep score for a given date.
+    
+    Args:
+        api: Garmin API client
+        date: Date to get sleep score for (datetime.date object)
+        
+    Returns:
+        int: Sleep score (0 if not available)
+    """
+    try:
+        formatted_date = date.strftime('%Y-%m-%d')
+        sleep_data = api.get_sleep_data(formatted_date)
+        
+        # Direct path navigation with defaults at each step
+        if not sleep_data:
+            return 0
+            
+        sleep_dto = sleep_data.get('dailySleepDTO', {})
+        scores = sleep_dto.get('sleepScores', {})
+        overall = scores.get('overall', {})
+        return overall.get('value', 0)
+    except Exception as e:
+        logger.warning(f"Failed to get sleep score for {date}: {str(e)}")
+        return 0
 
 def run_garmin_etl():
     """Execute Garmin ETL process."""
