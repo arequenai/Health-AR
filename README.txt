@@ -2,7 +2,6 @@ Personal file to monitory health data
 
 Backlog
 
-google gym excel
 fix mfp no info
 
 whoop recovery

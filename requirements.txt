@@ -9,3 +9,7 @@ setuptools
 numpy
 gspread
 oauth2client
+matplotlib
+seaborn
+scikit-learn
+joblib
