@@ -20,3 +20,7 @@ WHOOP_JOURNAL_CLEAN_FILE = f'{DATA_DIR}/journal.csv'
 
 MFP_MEALS_FILE = f'{DATA_DIR}/mfp_meals.csv'
 MFP_DAILY_FILE = f'{DATA_DIR}/mfp_daily.csv'
+
+# Google Sheets
+GSHEETS_URL = 'https://docs.google.com/spreadsheets/d/10aUHxf4MBlHJvAPjKPsAS-WbGg6-BnUTENeH4Bj9rM8/edit?gid=0'
+GSHEETS_FILE = f'{DATA_DIR}/gs_gym.csv'

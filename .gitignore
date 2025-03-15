@@ -8,7 +8,7 @@ venv/
 
 # Credentials and secrets
 Credentials.env
-gsheets key.json
+gsheets_key.json
 *.json
 
 # Docker

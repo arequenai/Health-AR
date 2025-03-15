@@ -1,6 +1,7 @@
 from typing import Dict, Any, Optional
 import pandas as pd
 from etl import config
+import datetime
 
 def get_metrics() -> Optional[Dict[str, Dict[str, Dict[str, Any]]]]:
     """Get all metrics from various sources."""
@@ -37,6 +38,77 @@ def get_metrics() -> Optional[Dict[str, Dict[str, Dict[str, Any]]]]:
             cal_label = 'kcal over'
         else:
             cal_label = 'kcal rem'
+            
+        # Calculate time spent on strength training from Garmin activities
+        strength_minutes = 0
+        try:
+            # Read Garmin activities data
+            df_activities = pd.read_csv(config.GARMIN_ACTIVITIES_FILE)
+            
+            # Convert date to datetime for comparison
+            df_activities['date'] = pd.to_datetime(df_activities['date'])
+            
+            # Get the start of this week (Monday)
+            today = pd.Timestamp.now().date()
+            start_of_week = today - datetime.timedelta(days=today.weekday())
+            
+            # Filter for strength activities this week
+            strength_types = ['strength_training', 'indoor_cardio', 'fitness_equipment', 'training', 'other']
+            this_week_strength = df_activities[
+                (df_activities['date'] >= pd.Timestamp(start_of_week)) & 
+                (df_activities['type'].str.lower().isin(strength_types))
+            ]
+            
+            # Calculate total duration in minutes
+            if not this_week_strength.empty and 'duration' in this_week_strength.columns:
+                # Convert duration from seconds to minutes
+                strength_minutes = int(this_week_strength['duration'].sum() / 60)
+        except (FileNotFoundError, pd.errors.EmptyDataError) as e:
+            strength_minutes = 0
+            
+        # Format strength time in h:mm format
+        strength_hours = strength_minutes // 60
+        strength_mins = strength_minutes % 60
+        strength_time = f"{strength_hours}:{strength_mins:02d}"
+            
+        # Read Strength (Google Sheets) data
+        try:
+            df_strength = pd.read_csv(config.GSHEETS_FILE)
+            
+            # Ensure date column is in datetime format
+            df_strength['date'] = pd.to_datetime(df_strength['date'])
+            
+            # Find max pull-ups in the last recorded day with pull-ups
+            # First, make sure the 'exercise' and 'reps' columns exist
+            if 'exercise' in df_strength.columns and 'reps' in df_strength.columns:
+                # Filter for pull-up exercises
+                pullup_df = df_strength[df_strength['exercise'].str.contains('pull-up|pullup|pull up', case=False, na=False)]
+                
+                if not pullup_df.empty:
+                    # Convert reps to numeric, handling any errors
+                    pullup_df.loc[:, 'reps'] = pd.to_numeric(pullup_df['reps'], errors='coerce')
+                    
+                    # Get the most recent date with pull-ups
+                    last_pullup_date = pullup_df['date'].max()
+                    
+                    # Get the max reps for that date
+                    last_day_pullups = pullup_df[pullup_df['date'] == last_pullup_date]['reps'].max()
+                    max_pullups = int(last_day_pullups) if not pd.isna(last_day_pullups) else '-'
+                else:
+                    max_pullups = '-'
+            else:
+                max_pullups = '-'
+                
+            # Count entries in the last 7 days
+            today = pd.Timestamp.now().date()
+            week_ago = pd.Timestamp(today - datetime.timedelta(days=7))
+            recent_entries = df_strength[df_strength['date'] >= week_ago]
+            entries_last_7d = len(recent_entries)
+            
+        except (FileNotFoundError, pd.errors.EmptyDataError) as e:
+            # If file doesn't exist or is empty, use placeholder values
+            max_pullups = '-'
+            entries_last_7d = 0
 
         metrics = {
             'nutrition': {
@@ -60,9 +132,9 @@ def get_metrics() -> Optional[Dict[str, Dict[str, Dict[str, Any]]]]:
                 'secondary2': {'value': f"{int(last_7d_altitude)}", 'label': 'm gain L7d'}
             },
             'strength': {
-                'primary': {'value': 3, 'label': 'since lifting'},    # Placeholder
-                'secondary1': {'value': '-', 'label': 'pullups'}, # Placeholder
-                'secondary2': {'value': '-', 'label': 'min'}      # Placeholder
+                'primary': {'value': strength_time, 'label': 'time L7d', 'color_value': strength_minutes},
+                'secondary1': {'value': max_pullups, 'label': 'pullups'},
+                'secondary2': {'value': entries_last_7d, 'label': 'sets L7d'}
             },
             'glucose': {
                 'primary': {'value': 95, 'label': 'mg/dL'},        # Placeholder

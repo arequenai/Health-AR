@@ -3,7 +3,7 @@ import concurrent.futures
 from viz.dashboard_components import display_metric_box
 from viz.metrics_handler import get_metrics
 from viz.styles import DASHBOARD_CSS
-from etl import run_garmin_etl, run_whoop_etl, run_mfp_daily_only
+from etl import run_garmin_etl, run_whoop_etl, run_mfp_daily_only, run_gsheets_etl
 
 # Set page config
 st.set_page_config(
@@ -26,7 +26,8 @@ with st.spinner('Updating data...'):
         etl_tasks = [
             run_garmin_etl,
             run_whoop_etl,
-            run_mfp_daily_only
+            run_mfp_daily_only,
+            run_gsheets_etl
         ]
         
         # Execute tasks in parallel

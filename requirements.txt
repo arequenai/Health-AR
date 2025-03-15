@@ -7,3 +7,5 @@ whoop
 myfitnesspal
 setuptools
 numpy
+gspread
+oauth2client
