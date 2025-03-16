@@ -4,9 +4,8 @@ Backlog
 
 fix mfp no info
 
-
-glucose
 deeper dives
+
 colors and arrows
 
 journal google behaviour

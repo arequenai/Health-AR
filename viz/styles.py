@@ -68,5 +68,17 @@ DASHBOARD_CSS = """
         width: 170px !important;  /* Fixed width for columns */
         flex: none !important;  /* Prevent flex resizing */
     }
+    
+    /* Hide Streamlit UI elements */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    .stDeployButton {display: none;}
+    .viewerBadge_link__1S137 {display: none;}
+    .viewerBadge_container__1QSob {display: none;}
+    .stToolbar {display: none !important;}
+    .stDecoration {display: none !important;}
+    .stStatusWidget {display: none !important;}
+    .reportview-container .main .block-container {padding-top: 0rem;}
     </style>
 """ 

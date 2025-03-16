@@ -9,11 +9,26 @@ from etl import run_garmin_etl, run_whoop_etl, run_mfp_daily_only, run_gsheets_e
 st.set_page_config(
     page_title="Health Dashboard",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="collapsed",
+    menu_items={
+        'Get Help': None,
+        'Report a bug': None,
+        'About': None
+    }
 )
 
 # Apply CSS
 st.markdown(DASHBOARD_CSS, unsafe_allow_html=True)
+
+# Hide Streamlit elements using an alternative method (in addition to CSS)
+hide_st_style = """
+<style>
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+header {visibility: hidden;}
+</style>
+"""
+st.markdown(hide_st_style, unsafe_allow_html=True)
 
 # Auto-update data on page load
 with st.spinner('Updating data...'):
