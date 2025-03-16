@@ -1,10 +1,10 @@
 Backlog
 
-deeper dives
-
-colors and arrows
+deeper dives, trends
 
 fix mfp no info
 
 journal google behaviour
 whoop recovery
+
+overall llm insight
