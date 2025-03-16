@@ -50,11 +50,18 @@ DASHBOARD_CSS = """
         margin: 0;
         padding: 0;
     }
+    /* Primary metric colors */
     .level-5 { color: #2ECC40; }
     .level-4 { color: #01FF70; }
     .level-3 { color: #FFDC00; }
     .level-2 { color: #FF851B; }
     .level-1 { color: #FF4136; }
+    
+    /* Secondary metric colors */
+    .secondary-normal { color: #888; }  /* Default grey */
+    .secondary-good { color: #2ECC40; } /* Green for good values */
+    .secondary-bad { color: #FF4136; }  /* Red for bad values */
+    
     [data-testid="stHorizontalBlock"] {
         gap: 0rem;
         padding: 0 !important;
