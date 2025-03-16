@@ -71,10 +71,35 @@ def get_metrics() -> Optional[Dict[str, Dict[str, Dict[str, Any]]]]:
             fasting_glucose = '-'
             mean_glucose = '-'
         
-        # Calculate last 7 days metrics
+        # Calculate last 7 days metrics from Garmin activities instead of daily summaries
         last_7d = df_garmin.tail(7)
-        last_7d_distance = last_7d['totalDistanceMeters'].sum() / 1000  # Convert to km
         last_7d_altitude = last_7d['floorsAscendedInMeters'].sum()  # Already in meters
+
+        # Calculate running distance from activities
+        last_7d_distance = 0
+        try:
+            # Read Garmin activities data
+            df_activities = pd.read_csv(config.GARMIN_ACTIVITIES_FILE)
+            
+            # Convert date to datetime for comparison
+            df_activities['date'] = pd.to_datetime(df_activities['date'])
+            
+            # Get activities from the last 7 days
+            today = pd.Timestamp.now().date()
+            week_ago = pd.Timestamp(today - datetime.timedelta(days=7))
+            recent_activities = df_activities[df_activities['date'] >= week_ago]
+            
+            # Filter for running activities
+            running_types = ['running', 'treadmill_running', 'trail_running', 'track_running']
+            running_activities = recent_activities[recent_activities['type'].str.lower().isin(running_types)]
+            
+            # Sum distances in kilometers
+            if not running_activities.empty and 'distance' in running_activities.columns:
+                # Assuming distance is in meters in the activities file
+                last_7d_distance = running_activities['distance'].sum() / 1000
+        except (FileNotFoundError, pd.errors.EmptyDataError) as e:
+            print(f"Error calculating running distance: {e}")
+            last_7d_distance = 0
 
         # Format sleep time
         sleep_hours = latest_garmin['sleepingSeconds'] / 3600  # Convert seconds to hours
@@ -166,6 +191,11 @@ def get_metrics() -> Optional[Dict[str, Dict[str, Dict[str, Any]]]]:
                 'secondary1': {'value': l7d_net_calories, 'label': 'net above L7d'},
                 'secondary2': {'value': int(latest_mfp['protein']), 'label': 'protein g'}
             },
+            'glucose': {
+                'primary': {'value': glucose_value, 'label': 'mg/dL'},
+                'secondary1': {'value': fasting_glucose, 'label': 'fasting'}, 
+                'secondary2': {'value': mean_glucose, 'label': 'mean day'}
+            },
             'recovery': {
                 'primary': {'value': int(latest_whoop['recovery_score']), 'label': 'recovery'},
                 'secondary1': {'value': int(latest_garmin['bodyBatteryMostRecentValue']), 'label': 'battery now'},
@@ -178,18 +208,13 @@ def get_metrics() -> Optional[Dict[str, Dict[str, Dict[str, Any]]]]:
             },
             'running': {
                 'primary': {'value': int(latest_garmin['TSB']), 'label': 'TSB'},
-                'secondary1': {'value': f"{last_7d_distance:.1f}", 'label': 'km L7d'},
+                'secondary1': {'value': f"{last_7d_distance:.1f}", 'label': 'km run L7d'},
                 'secondary2': {'value': f"{int(last_7d_altitude)}", 'label': 'm gain L7d'}
             },
             'strength': {
                 'primary': {'value': strength_time, 'label': 'time L7d', 'color_value': strength_minutes},
                 'secondary1': {'value': max_pullups, 'label': 'pullups'},
                 'secondary2': {'value': entries_last_7d, 'label': 'sets L7d'}
-            },
-            'glucose': {
-                'primary': {'value': glucose_value, 'label': 'mg/dL'},
-                'secondary1': {'value': fasting_glucose, 'label': 'fasting'}, 
-                'secondary2': {'value': mean_glucose, 'label': 'mean day'}
             }
         }
         return metrics

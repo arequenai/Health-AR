@@ -227,6 +227,7 @@ def get_garmin_activities(garmin_client, start_date=datetime.date(2024, 3, 16)):
             'date': activity_date,
             'type': activity.get('activityType', {}).get('typeKey', 'unknown'),
             'duration': activity.get('duration', 0),
+            'distance': activity.get('distance', 0),
             'training_load': activity.get('activityTrainingLoad', 0),
             'aerobic_te': activity.get('aerobicTrainingEffect', 0),
             'anaerobic_te': activity.get('anaerobicTrainingEffect', 0),

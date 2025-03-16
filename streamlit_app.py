@@ -59,7 +59,7 @@ with st.spinner('Updating data...'):
 # Main layout
 metrics = get_metrics()
 if metrics:
-    for metric_name in ['Nutrition', 'Recovery', 'Sleep', 'Running', 'Strength', 'Glucose']:
+    for metric_name in ['Nutrition', 'Glucose', 'Recovery', 'Sleep', 'Running', 'Strength']:
         display_metric_box(metric_name,
                          metrics[metric_name.lower()]['primary'],
                          metrics[metric_name.lower()]['secondary1'],

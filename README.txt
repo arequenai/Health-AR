@@ -1,5 +1,3 @@
-Personal file to monitory health data
-
 Backlog
 
 fix mfp no info
