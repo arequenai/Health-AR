@@ -20,72 +20,15 @@ st.set_page_config(
 # Apply CSS
 st.markdown(DASHBOARD_CSS, unsafe_allow_html=True)
 
-# More aggressive hiding of Streamlit elements
+# Hide Streamlit elements using an alternative method (in addition to CSS)
 hide_st_style = """
 <style>
-/* Hide all Streamlit elements */
-#MainMenu {visibility: hidden !important;}
-footer {visibility: hidden !important;}
-header {visibility: hidden !important;}
-
-/* Hide the Streamlit branding */
-.stApp div[data-testid="stToolbar"] {visibility: hidden !important;}
-.stApp div[data-testid="stDecoration"] {visibility: hidden !important;}
-.stApp section[data-testid="stSidebar"] {visibility: hidden !important;}
-.stApp button[kind="minimalistic"] {display: none !important;}
-.stApp a[href="https://streamlit.io"] {display: none !important;}
-.stApp a[href^="https://share.streamlit.io"] {display: none !important;}
-.stApp iframe[src^="https://share.streamlit.io"] {display: none !important;}
-
-/* Hide the Streamlit footer brand */
-.footer-logo-container {display: none !important;}
-.stApp footer {display: none !important;}
-
-/* Hide profile photo and crown */
-img[src*="streamlit_logo"] {display: none !important;}
-img[src*="streamlit-logo"] {display: none !important;}
-a[href^="https://streamlit.io/cloud"] {display: none !important;}
-.streamlit-logo {display: none !important;}
-.eyeqlp51 {display: none !important;} /* Common class for branding elements */
-[data-testid="stSidebarUserContent"] {display: none !important;}
-[data-baseweb="button"] {display: none !important;}
-[data-baseweb="popover"] {display: none !important;}
-
-/* Additional selector to hide any floating elements */
-div[data-testid="stFloatingViewerBadge"] {display: none !important;}
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+header {visibility: hidden;}
 </style>
 """
 st.markdown(hide_st_style, unsafe_allow_html=True)
-
-# Add this at the end of your app to remove any remaining elements with JavaScript
-st.markdown("""
-<script>
-// Function to hide elements after the page loads
-function hideStreamlitElements() {
-  // Hide any element with streamlit or Streamlit in the class name, id, or data attributes
-  document.querySelectorAll('[class*="streamlit"],[class*="Streamlit"],[id*="streamlit"],[id*="Streamlit"],[data-*="streamlit"],[data-*="Streamlit"]').forEach(el => {
-    el.style.display = 'none';
-  });
-  
-  // Specifically target the crown and profile elements
-  document.querySelectorAll('img[alt="Streamlit logo"]').forEach(el => {
-    el.style.display = 'none';
-  });
-  
-  // Try to find the specific elements by their styles or position
-  document.querySelectorAll('div[style*="position: fixed"]').forEach(el => {
-    if (el.innerHTML.includes('streamlit') || el.innerHTML.includes('Streamlit')) {
-      el.style.display = 'none';
-    }
-  });
-}
-
-// Execute after page load
-window.addEventListener('load', hideStreamlitElements);
-// Also run after a short delay to catch dynamically added elements
-setTimeout(hideStreamlitElements, 1000);
-</script>
-""", unsafe_allow_html=True)
 
 # Auto-update data on page load
 with st.spinner('Updating data...'):
