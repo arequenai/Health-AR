@@ -13,6 +13,14 @@ def get_metric_level(metric_name: str, value: float | str) -> int:
                 return level
         return 1
     
+    # Special handling for glucose where a range is ideal (not too high, not too low)
+    if metric_name == 'glucose':
+        # For glucose, lower values in the thresholds are better
+        for level in range(5, 0, -1):
+            if float(value) <= float(thresholds[str(level)]):
+                return level
+        return 1
+    
     # Normal handling for other metrics where higher is better
     for level in range(5, 0, -1):
         if float(value) >= float(thresholds[str(level)]):

@@ -2,6 +2,7 @@ from typing import Dict, Any, Optional
 import pandas as pd
 from etl import config
 import datetime
+import os
 
 def get_metrics() -> Optional[Dict[str, Dict[str, Dict[str, Any]]]]:
     """Get all metrics from various sources."""
@@ -20,6 +21,55 @@ def get_metrics() -> Optional[Dict[str, Dict[str, Dict[str, Any]]]]:
         # Read Garmin data
         df_garmin = pd.read_csv(config.GARMIN_DAILY_FILE)
         latest_garmin = df_garmin.iloc[-1]
+        
+        # Read Glucose data
+        glucose_value = '-'
+        fasting_glucose = '-'
+        mean_glucose = '-'
+        
+        try:
+            # Check if glucose data exists
+            glucose_daily_file = 'data/glucose_daily.csv'
+            glucose_raw_file = 'data/glucose_raw.csv'
+            
+            # Get latest fasting glucose and daily mean from daily file
+            if os.path.exists(glucose_daily_file):
+                df_glucose_daily = pd.read_csv(glucose_daily_file)
+                if not df_glucose_daily.empty:
+                    # Convert date to datetime for proper comparison
+                    df_glucose_daily['date'] = pd.to_datetime(df_glucose_daily['date'])
+                    
+                    # Get latest record for fasting glucose
+                    latest_glucose_day = df_glucose_daily.iloc[-1]
+                    fasting_glucose = int(latest_glucose_day['fasting_glucose']) if pd.notna(latest_glucose_day['fasting_glucose']) else '-'
+                    
+                    # Get mean glucose from the last complete day (yesterday)
+                    today = pd.Timestamp.now().date()
+                    yesterday = today - datetime.timedelta(days=1)
+                    yesterday_data = df_glucose_daily[df_glucose_daily['date'].dt.date == yesterday]
+                    
+                    if not yesterday_data.empty:
+                        mean_glucose = int(yesterday_data.iloc[0]['mean_glucose'])
+                    else:
+                        # If no data for yesterday, use the latest available day
+                        mean_glucose = int(latest_glucose_day['mean_glucose'])
+            
+            # Get the latest glucose reading from raw file
+            if os.path.exists(glucose_raw_file):
+                df_glucose_raw = pd.read_csv(glucose_raw_file)
+                if not df_glucose_raw.empty:
+                    # Convert date to datetime for sorting
+                    df_glucose_raw['date'] = pd.to_datetime(df_glucose_raw['date'])
+                    
+                    # Sort by date descending and get the most recent reading
+                    df_glucose_raw = df_glucose_raw.sort_values('date', ascending=False)
+                    latest_reading = df_glucose_raw.iloc[0]
+                    glucose_value = int(latest_reading['sgv']) if 'sgv' in df_glucose_raw.columns else '-'
+        except Exception as e:
+            print(f"Error loading glucose data: {e}")
+            glucose_value = '-'
+            fasting_glucose = '-'
+            mean_glucose = '-'
         
         # Calculate last 7 days metrics
         last_7d = df_garmin.tail(7)
@@ -137,9 +187,9 @@ def get_metrics() -> Optional[Dict[str, Dict[str, Dict[str, Any]]]]:
                 'secondary2': {'value': entries_last_7d, 'label': 'sets L7d'}
             },
             'glucose': {
-                'primary': {'value': 95, 'label': 'mg/dL'},        # Placeholder
-                'secondary1': {'value': '-', 'label': 'fasting'}, # Placeholder
-                'secondary2': {'value': '-', 'label': 'mean'}    # Placeholder
+                'primary': {'value': glucose_value, 'label': 'mg/dL'},
+                'secondary1': {'value': fasting_glucose, 'label': 'fasting'}, 
+                'secondary2': {'value': mean_glucose, 'label': 'mean day'}
             }
         }
         return metrics
