@@ -1,0 +1,2 @@
+date,mean_glucose,min_glucose,max_glucose,std_glucose,readings_count,time_in_range_pct,time_above_range_pct,time_below_range_pct,fasting_glucose
+2025-02-07,116.0,116.0,116.0,0,1,100.0,0.0,0.0,116.0

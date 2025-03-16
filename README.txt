@@ -4,8 +4,10 @@ Backlog
 
 fix mfp no info
 
-whoop recovery
 
 glucose
 deeper dives
 colors and arrows
+
+journal google behaviour
+whoop recovery
