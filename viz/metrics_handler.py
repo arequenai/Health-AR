@@ -123,21 +123,21 @@ def get_metrics() -> Optional[Dict[str, Dict[str, Dict[str, Any]]]]:
             # Convert date to datetime for comparison
             df_activities['date'] = pd.to_datetime(df_activities['date'])
             
-            # Get the start of this week (Monday)
+            # Get the last 7 days instead of start of week
             today = pd.Timestamp.now().date()
-            start_of_week = today - datetime.timedelta(days=today.weekday())
+            seven_days_ago = today - datetime.timedelta(days=7)
             
-            # Filter for strength activities this week
+            # Filter for strength activities in the last 7 days
             strength_types = ['strength_training', 'indoor_cardio', 'fitness_equipment', 'training', 'other']
-            this_week_strength = df_activities[
-                (df_activities['date'] >= pd.Timestamp(start_of_week)) & 
+            last_7d_strength = df_activities[
+                (df_activities['date'] >= pd.Timestamp(seven_days_ago)) & 
                 (df_activities['type'].str.lower().isin(strength_types))
             ]
             
             # Calculate total duration in minutes
-            if not this_week_strength.empty and 'duration' in this_week_strength.columns:
+            if not last_7d_strength.empty and 'duration' in last_7d_strength.columns:
                 # Convert duration from seconds to minutes
-                strength_minutes = int(this_week_strength['duration'].sum() / 60)
+                strength_minutes = int(last_7d_strength['duration'].sum() / 60)
         except (FileNotFoundError, pd.errors.EmptyDataError) as e:
             strength_minutes = 0
             

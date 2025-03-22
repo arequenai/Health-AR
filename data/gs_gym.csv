@@ -1,34 +1,52 @@
-date,exercise,weight,reps,1rm
-2025-09-03,Pull up,0.0,10,0.0
-2025-09-03,Pull up,0.0,8,0.0
-2025-09-03,Pull up,0.0,4,0.0
-2025-09-03,Machine bench press,63.0,9,81.9
-2025-09-03,Machine bench press,63.0,7,77.7
-2025-09-03,Machine bench press,63.0,6,75.6
-2025-09-03,Curl biceps barra,25.0,15,37.5
-2025-09-03,Curl biceps barra,25.0,12,35.0
-2025-09-03,Curl biceps barra,25.0,12,35.0
-2025-09-03,Triceps pull down barra,29.3,14,42.97
-2025-09-03,Triceps pull down barra,29.3,13,42.0
-2025-09-03,Triceps pull down barra,29.3,12,41.02
-2025-09-03,Shoulder cable lateral raise,4.5,12,6.3
-2025-09-03,Shoulder cable lateral raise,4.5,11,6.15
-2025-09-03,Shoulder cable lateral raise,4.5,10,6.0
-2025-09-03,Isquios tumbado,36.0,11,49.2
-2025-09-03,Isquios tumbado,36.0,10,48.0
-2025-09-03,Isquios tumbado,36.0,10,48.0
-2025-12-03,Pull up,0.0,10,0.0
-2025-12-03,Pull up,0.0,7,0.0
-2025-12-03,Pull up,0.0,5,0.0
-2025-12-03,Machine bench press,60.0,12,84.0
-2025-12-03,Machine bench press,65.0,10,86.67
-2025-12-03,Machine bench press,63.0,6,75.6
-2025-12-03,Curl biceps barra W,25.0,15,37.5
-2025-12-03,Curl biceps barra W,25.0,13,35.83
-2025-12-03,Curl biceps barra W,25.0,10,33.33
-2025-12-03,Triceps pull down cuerda,20.0,15,30.0
-2025-12-03,Triceps pull down cuerda,25.0,10,33.33
-2025-12-03,Triceps pull down cuerda,25.0,10,33.33
-2025-12-03,Shoulder cable lateral raise,3.75,10,5.0
-2025-12-03,Shoulder cable lateral raise,3.75,10,5.0
-2025-12-03,Shoulder cable lateral raise,3.75,10,5.0
+date,exercise,weight,reps,,1rm
+2025-03-09,Pull up,0.0,10,9/3/2025,0.0
+2025-03-09,Pull up,0.0,8,9/3/2025,0.0
+2025-03-09,Pull up,0.0,4,9/3/2025,0.0
+2025-03-09,Machine bench press,63.0,9,9/3/2025,81.9
+2025-03-09,Machine bench press,63.0,7,9/3/2025,77.7
+2025-03-09,Machine bench press,63.0,6,9/3/2025,75.6
+2025-03-09,Curl biceps barra,25.0,15,9/3/2025,37.5
+2025-03-09,Curl biceps barra,25.0,12,9/3/2025,35.0
+2025-03-09,Curl biceps barra,25.0,12,9/3/2025,35.0
+2025-03-09,Triceps pull down barra,29.3,14,9/3/2025,42.97
+2025-03-09,Triceps pull down barra,29.3,13,9/3/2025,42.0
+2025-03-09,Triceps pull down barra,29.3,12,9/3/2025,41.02
+2025-03-09,Shoulder cable lateral raise,4.5,12,9/3/2025,6.3
+2025-03-09,Shoulder cable lateral raise,4.5,11,9/3/2025,6.15
+2025-03-09,Shoulder cable lateral raise,4.5,10,9/3/2025,6.0
+2025-03-09,Isquios tumbado,36.0,11,9/3/2025,49.2
+2025-03-09,Isquios tumbado,36.0,10,9/3/2025,48.0
+2025-03-09,Isquios tumbado,36.0,10,9/3/2025,48.0
+2025-03-12,Pull up,0.0,10,12/3/2025,0.0
+2025-03-12,Pull up,0.0,7,12/3/2025,0.0
+2025-03-12,Pull up,0.0,5,12/3/2025,0.0
+2025-03-12,Machine bench press,60.0,12,12/3/2025,84.0
+2025-03-12,Machine bench press,65.0,10,12/3/2025,86.67
+2025-03-12,Machine bench press,63.0,6,12/3/2025,75.6
+2025-03-12,Curl biceps barra W,25.0,15,12/3/2025,37.5
+2025-03-12,Curl biceps barra W,25.0,13,12/3/2025,35.83
+2025-03-12,Curl biceps barra W,25.0,10,12/3/2025,33.33
+2025-03-12,Triceps pull down cuerda,20.0,15,12/3/2025,30.0
+2025-03-12,Triceps pull down cuerda,25.0,10,12/3/2025,33.33
+2025-03-12,Triceps pull down cuerda,25.0,10,12/3/2025,33.33
+2025-03-12,Shoulder cable lateral raise,3.75,10,12/3/2025,5.0
+2025-03-12,Shoulder cable lateral raise,3.75,10,12/3/2025,5.0
+2025-03-12,Shoulder cable lateral raise,3.75,10,12/3/2025,5.0
+2025-03-18,Pull up,0.0,11,18/3/2025,0.0
+2025-03-18,Pull up,0.0,8,18/3/2025,0.0
+2025-03-18,Pull up,0.0,5,18/3/2025,0.0
+2025-03-18,Machine bench press,63.0,10,18/3/2025,84.0
+2025-03-18,Machine bench press,63.0,7,18/3/2025,77.7
+2025-03-18,Machine bench press,63.0,5,18/3/2025,73.5
+2025-03-18,Curl biceps barra W,30.0,10,18/3/2025,40.0
+2025-03-18,Curl biceps barra W,30.0,9,18/3/2025,39.0
+2025-03-18,Curl biceps barra W,30.0,9,18/3/2025,39.0
+2025-03-18,Triceps pull down barra,29.3,15,18/3/2025,43.95
+2025-03-18,Triceps pull down barra,29.3,15,18/3/2025,43.95
+2025-03-18,Triceps pull down barra,29.3,12,18/3/2025,41.02
+2025-03-18,Shoulder cable lateral raise,3.4,7,18/3/2025,4.19
+2025-03-18,Shoulder cable lateral raise,3.4,8,18/3/2025,4.31
+2025-03-18,Shoulder cable lateral raise,3.4,7,18/3/2025,4.19
+2025-03-18,Core transversal cuerda diagonal arriba a abajo,13.5,10,18/3/2025,18.0
+2025-03-18,Core transversal cuerda diagonal arriba a abajo,13.5,10,18/3/2025,18.0
+2025-03-18,Core transversal cuerda diagonal arriba a abajo,13.5,10,18/3/2025,18.0
