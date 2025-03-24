@@ -114,6 +114,22 @@ def get_metrics() -> Optional[Dict[str, Dict[str, Dict[str, Any]]]]:
         else:
             cal_label = 'kcal rem'
             
+        # Get sleep behavior score from Google Journal
+        sleep_behaviour_score = '-'
+        try:
+            if os.path.exists(config.JOURNAL_FILE):
+                df_journal = pd.read_csv(config.JOURNAL_FILE)
+                if not df_journal.empty and 'sleep_behaviour_score' in df_journal.columns:
+                    # Get the most recent score
+                    df_journal['date'] = pd.to_datetime(df_journal['date'])
+                    df_journal = df_journal.sort_values('date', ascending=False)
+                    latest_score = df_journal.iloc[0]['sleep_behaviour_score']
+                    if pd.notna(latest_score):
+                        sleep_behaviour_score = int(latest_score)
+        except Exception as e:
+            print(f"Error getting sleep behavior score: {e}")
+            sleep_behaviour_score = '-'
+            
         # Calculate time spent on strength training from Garmin activities
         strength_minutes = 0
         try:
@@ -204,7 +220,7 @@ def get_metrics() -> Optional[Dict[str, Dict[str, Dict[str, Any]]]]:
             'sleep': {
                 'primary': {'value': int(latest_garmin['sleep_score']), 'label': 'sleep'},
                 'secondary1': {'value': sleep_time, 'label': 'hrs in bed'},
-                'secondary2': {'value': '-', 'label': 'behavior'} # Still placeholder
+                'secondary2': {'value': sleep_behaviour_score, 'label': 'bed habits'}
             },
             'running': {
                 'primary': {'value': int(latest_garmin['TSB']), 'label': 'TSB'},

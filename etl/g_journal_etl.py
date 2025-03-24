@@ -204,6 +204,74 @@ def get_journal_data(client, spreadsheet_url, filename):
                     else x
                 )
         
+        # Calculate individual component scores and total sleep score
+        def calculate_bed_behavior_score(value):
+            value = str(value).lower() if pd.notna(value) else ''
+            
+            if '1 - read' in value or '1 -read' in value or '1- read' in value or '1-read' in value:
+                return 40
+            elif '2 - direct' in value or '2 -direct' in value or '2- direct' in value or '2-direct' in value:
+                return 30
+            elif '3 - calm video' in value or '3 -calm video' in value or '3- calm video' in value or '3-calm video' in value:
+                return 20
+            elif '4 - other phone activity' in value or '4 -other' in value or '4- other' in value or '4-other' in value:
+                return 0
+            # Fallback to more general matching
+            elif '1' in value or 'read' in value:
+                return 40
+            elif '2' in value or 'direct' in value:
+                return 30
+            elif '3' in value or 'calm' in value or 'video' in value:
+                return 20
+            else:
+                return 0
+        
+        def calculate_alcohol_score(value):
+            value = str(value).lower() if pd.notna(value) else ''
+            
+            if 'no, 0' in value:
+                return 40
+            elif 'yes, 1' in value:
+                return 20
+            elif 'yes, 2' in value:
+                return 10
+            elif 'yes, 3+' in value:
+                return 0
+            # Fallback to more general matching
+            elif 'no' in value or '0' in value:
+                return 40
+            elif '1' in value:
+                return 20
+            elif '2' in value:
+                return 10
+            elif '3' in value or '3+' in value:
+                return 0
+            else:
+                return 0
+        
+        def calculate_bed_full_score(value):
+            value = str(value).lower() if pd.notna(value) else ''
+            return 20 if value == 'no' else 0
+        
+        # Add component scores
+        df_renamed['bed_behavior_score'] = df_renamed['bed_behavior'].apply(calculate_bed_behavior_score)
+        df_renamed['alcohol_score'] = df_renamed['alcohol'].apply(calculate_alcohol_score)
+        df_renamed['bed_full_score'] = df_renamed['bed_full'].apply(calculate_bed_full_score)
+        
+        # Calculate total score
+        df_renamed['sleep_behaviour_score'] = df_renamed['bed_behavior_score'] + df_renamed['alcohol_score'] + df_renamed['bed_full_score']
+        
+        # Log some examples for verification
+        if not df_renamed.empty:
+            sample_rows = min(5, len(df_renamed))
+            for i in range(sample_rows):
+                row = df_renamed.iloc[i]
+                logger.info(f"Sample score {i+1}: Date={row['date']}, "
+                            f"Bed Behavior='{row['bed_behavior']}' ({row['bed_behavior_score']} pts), "
+                            f"Alcohol='{row['alcohol']}' ({row['alcohol_score']} pts), "
+                            f"Bed Full='{row['bed_full']}' ({row['bed_full_score']} pts), "
+                            f"Total Score={row['sleep_behaviour_score']}")
+        
         # Sort by date
         df_renamed = df_renamed.sort_values('date')
         
