@@ -24,3 +24,7 @@ MFP_DAILY_FILE = f'{DATA_DIR}/mfp_daily.csv'
 # Google Sheets
 GSHEETS_URL = 'https://docs.google.com/spreadsheets/d/10aUHxf4MBlHJvAPjKPsAS-WbGg6-BnUTENeH4Bj9rM8/edit?gid=0'
 GSHEETS_FILE = f'{DATA_DIR}/gs_gym.csv'
+
+# Google Journal
+GSHEET_JOURNAL_URL = 'https://docs.google.com/spreadsheets/d/1aepZFn4ciTdVtC9Kd_ykk7VTD6LSsyWBuD0Z-sVGLcs/edit?gid=1077059296#gid=1077059296'
+JOURNAL_FILE = f'{DATA_DIR}/g_journal.csv'

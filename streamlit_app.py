@@ -3,7 +3,7 @@ import concurrent.futures
 from viz.dashboard_components import display_metric_box
 from viz.metrics_handler import get_metrics
 from viz.styles import DASHBOARD_CSS
-from etl import run_garmin_etl, run_whoop_etl, run_mfp_daily_only, run_gsheets_etl, run_glucose_etl
+from etl import run_garmin_etl, run_whoop_etl, run_mfp_daily_only, run_gsheets_etl, run_glucose_etl, run_g_journal_etl
 import threading
 
 # Set page config
@@ -47,7 +47,8 @@ def run_background_etl():
             run_whoop_etl,
             run_mfp_daily_only,
             run_gsheets_etl,
-            run_glucose_etl
+            run_glucose_etl,
+            run_g_journal_etl
         ]
         
         # Execute tasks in parallel
