@@ -110,20 +110,82 @@ def extract_sleep_stages(sleep_data):
         "awake_sleep_seconds": 0
     }
     
-    # Return zeros if no data or no sleep levels
-    if not sleep_data or "sleepLevels" not in sleep_data:
+    # Return zeros if no data
+    if not sleep_data:
+        print("No sleep data found")
         return result
     
-    # Extract sleep stages from sleep levels
-    for level in sleep_data.get("sleepLevels", []):
-        if level["stage"] == "deep":
-            result["deep_sleep_seconds"] += level["seconds"]
-        elif level["stage"] == "light":
-            result["light_sleep_seconds"] += level["seconds"]
-        elif level["stage"] == "rem":
-            result["rem_sleep_seconds"] += level["seconds"]
-        elif level["stage"] == "awake":
-            result["awake_sleep_seconds"] += level["seconds"]
+    # Print a small sample of the sleep data for debugging
+    print("Sleep data keys:", list(sleep_data.keys()) if isinstance(sleep_data, dict) else "Not a dict")
+    
+    # Process activity level data directly
+    try:
+        # Handle the case where we have sleepLevels directly
+        sleep_levels = []
+        if isinstance(sleep_data, dict) and "sleepLevels" in sleep_data:
+            sleep_levels = sleep_data["sleepLevels"]
+        # Handle case where sleepLevels is under another key
+        elif isinstance(sleep_data, dict) and "dailySleepDTO" in sleep_data:
+            if "sleepLevels" in sleep_data:
+                sleep_levels = sleep_data["sleepLevels"]
+        
+        # Process each level based on activity level
+        for level in sleep_levels:
+            if not isinstance(level, dict):
+                continue
+                
+            # Extract times and activity level
+            start_time = level.get("startGMT", None)
+            end_time = level.get("endGMT", None)
+            activity_level = level.get("activityLevel", None)
+            
+            if not (start_time and end_time and activity_level is not None):
+                continue
+                
+            # Calculate duration
+            try:
+                # Try parsing with millisecond precision
+                start_dt = datetime.datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S.%f")
+                end_dt = datetime.datetime.strptime(end_time, "%Y-%m-%dT%H:%M:%S.%f")
+            except ValueError:
+                try:
+                    # Try parsing with zero decimal precision
+                    start_dt = datetime.datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S.0")
+                    end_dt = datetime.datetime.strptime(end_time, "%Y-%m-%dT%H:%M:%S.0")
+                except ValueError:
+                    # Last resort - try without decimal
+                    try:
+                        start_dt = datetime.datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S")
+                        end_dt = datetime.datetime.strptime(end_time, "%Y-%m-%dT%H:%M:%S")
+                    except ValueError:
+                        print(f"Could not parse times: {start_time} to {end_time}")
+                        continue
+            
+            # Calculate duration in seconds
+            duration_seconds = (end_dt - start_dt).total_seconds()
+            
+            # Map activity level to sleep stage
+            # Using Garmin's activity levels (0 = deep sleep, 1 = light sleep, 2 = REM, 3+ = awake)
+            if activity_level <= 0.25:
+                result["deep_sleep_seconds"] += duration_seconds
+            elif activity_level <= 1.25:  # 0.5-1.25 is light sleep
+                result["light_sleep_seconds"] += duration_seconds
+            elif activity_level <= 2.25:  # 1.5-2.25 is REM
+                result["rem_sleep_seconds"] += duration_seconds
+            else:  # 2.5+ is awake
+                result["awake_sleep_seconds"] += duration_seconds
+                
+        # If we have data in the result, print a summary
+        if sum(result.values()) > 0:
+            print("Extracted sleep stages: deep={:.1f}h, light={:.1f}h, rem={:.1f}h, awake={:.1f}h".format(
+                result["deep_sleep_seconds"]/3600,
+                result["light_sleep_seconds"]/3600,
+                result["rem_sleep_seconds"]/3600,
+                result["awake_sleep_seconds"]/3600
+            ))
+        
+    except Exception as e:
+        print(f"Error processing sleep stages: {e}")
     
     return result
 
@@ -139,34 +201,111 @@ def find_minimum_sustained_stress(stress_data, duration_mins=10):
     Returns:
         float: Minimum sustained stress level or None if not available
     """
-    if not stress_data or "stressValuesArray" not in stress_data:
-        return None
-    
-    values = stress_data.get("stressValuesArray", [])
-    if not values:
-        return None
-    
-    # Each stress measurement is typically at regular intervals
-    # We need to find consecutive low readings
-    min_sustained = 100  # Start with max possible value
-    current_run = []
-    
-    for entry in values:
-        value = entry.get("value")
-        if value is not None:  # Skip None entries
-            if len(current_run) == 0 or current_run[-1][0] + 60 >= entry.get("dateTime", 0):
-                # Add to current run if it's a consecutive reading (within ~1 minute)
-                current_run.append((entry.get("dateTime", 0), value))
-            else:
-                # Start new run
-                current_run = [(entry.get("dateTime", 0), value)]
+    try:
+        # Debug logging
+        print("Stress data keys:", list(stress_data.keys()) if isinstance(stress_data, dict) else "Not a dict")
+        
+        if not stress_data or not isinstance(stress_data, dict):
+            print("No valid stress data found")
+            return None
             
-            # Check if current run is long enough
-            if len(current_run) >= 4:  # Typically 4 readings would span about 15-20 minutes
-                avg_stress = sum(v for _, v in current_run) / len(current_run)
-                min_sustained = min(min_sustained, avg_stress)
-    
-    return min_sustained if min_sustained < 100 else None
+        if "stressValuesArray" not in stress_data:
+            print("No stress values array found")
+            return None
+            
+        values = stress_data["stressValuesArray"]
+        if not values or not isinstance(values, list):
+            print("No valid stress values found")
+            return None
+            
+        # Check the format of the entries - in newer Garmin API, each entry is a list [timestamp, value]
+        # rather than a dict with dateTime and value keys
+        if len(values) > 0 and isinstance(values[0], list):
+            print("Found list-format stress data")
+            # Process list-format data [timestamp, value]
+            valid_stress_points = []
+            for entry in values:
+                if len(entry) >= 2:
+                    timestamp, stress_value = entry[0], entry[1]
+                    # Filter out invalid stress values (-1, -2, etc. indicate no measurement)
+                    if isinstance(stress_value, (int, float)) and stress_value >= 0:
+                        valid_stress_points.append((timestamp, stress_value))
+            
+            if not valid_stress_points:
+                print("No valid stress measurements found")
+                return None
+                
+            # Sort by timestamp
+            valid_stress_points.sort(key=lambda x: x[0])
+            
+            # Find consecutive measurements that span the required duration
+            min_sustained = 100  # Start with max possible value
+            current_window = []
+            
+            for timestamp, value in valid_stress_points:
+                # Add the current point
+                current_window.append((timestamp, value))
+                
+                # Remove points that are outside our time window
+                # Typical sample rate is every 5-15 minutes, so duration_mins needs to be factored appropriately
+                time_threshold = timestamp - (duration_mins * 60 * 1000)  # Convert minutes to milliseconds
+                current_window = [p for p in current_window if p[0] >= time_threshold]
+                
+                # If we have enough points in our window, compute the average
+                if len(current_window) >= 3:  # Require at least 3 measurements for a meaningful average
+                    window_duration = current_window[-1][0] - current_window[0][0]
+                    # Check if window spans enough time (at least 80% of requested duration)
+                    if window_duration >= (duration_mins * 60 * 1000 * 0.8):
+                        avg_stress = sum(v for _, v in current_window) / len(current_window)
+                        min_sustained = min(min_sustained, avg_stress)
+            
+            return min_sustained if min_sustained < 100 else None
+            
+        else:
+            # Process original dict-format data
+            valid_stress_points = []
+            for entry in values:
+                if not isinstance(entry, dict):
+                    continue
+                    
+                value = entry.get("value")
+                entry_time = entry.get("dateTime")
+                
+                if value is None or entry_time is None:
+                    continue
+                
+                # Only include valid stress values (non-negative)
+                if isinstance(value, (int, float)) and value >= 0:
+                    valid_stress_points.append((entry_time, value))
+            
+            if not valid_stress_points:
+                print("No valid stress measurements found in dict format")
+                return None
+                
+            # Sort by timestamp
+            valid_stress_points.sort(key=lambda x: x[0])
+            
+            # Find consecutive measurements that span the required duration
+            min_sustained = 100  # Start with max possible value
+            current_run = []
+            
+            for entry_time, value in valid_stress_points:
+                if len(current_run) == 0 or current_run[-1][0] + 60 >= entry_time:
+                    # Add to current run if it's a consecutive reading (within ~1 minute)
+                    current_run.append((entry_time, value))
+                else:
+                    # Start new run
+                    current_run = [(entry_time, value)]
+                
+                # Check if current run is long enough
+                if len(current_run) >= 4:  # Typically 4 readings would span about 15-20 minutes
+                    avg_stress = sum(v for _, v in current_run) / len(current_run)
+                    min_sustained = min(min_sustained, avg_stress)
+            
+            return min_sustained if min_sustained < 100 else None
+    except Exception as e:
+        print(f"Error processing stress data: {e}")
+        return None
 
 def extract_respiration_data(respiration_data):
     """
@@ -184,22 +323,30 @@ def extract_respiration_data(respiration_data):
         "highest_respiration_rate": None
     }
     
-    if not respiration_data:
+    try:
+        # Debug logging
+        print("Respiration data keys:", list(respiration_data.keys()) if isinstance(respiration_data, dict) else "Not a dict")
+        
+        if not respiration_data or not isinstance(respiration_data, dict):
+            print("No valid respiration data found")
+            return result
+        
+        # Extract average respiration rate
+        if "avgValueInBreathsPerMinute" in respiration_data:
+            result["avg_respiration_rate"] = respiration_data["avgValueInBreathsPerMinute"]
+        
+        # Extract lowest respiration rate
+        if "lowestValueInBreathsPerMinute" in respiration_data:
+            result["lowest_respiration_rate"] = respiration_data["lowestValueInBreathsPerMinute"]
+        
+        # Extract highest respiration rate
+        if "highestValueInBreathsPerMinute" in respiration_data:
+            result["highest_respiration_rate"] = respiration_data["highestValueInBreathsPerMinute"]
+        
         return result
-    
-    # Extract average respiration rate
-    if "avgValueInBreathsPerMinute" in respiration_data:
-        result["avg_respiration_rate"] = respiration_data["avgValueInBreathsPerMinute"]
-    
-    # Extract lowest respiration rate
-    if "lowestValueInBreathsPerMinute" in respiration_data:
-        result["lowest_respiration_rate"] = respiration_data["lowestValueInBreathsPerMinute"]
-    
-    # Extract highest respiration rate
-    if "highestValueInBreathsPerMinute" in respiration_data:
-        result["highest_respiration_rate"] = respiration_data["highestValueInBreathsPerMinute"]
-    
-    return result
+    except Exception as e:
+        print(f"Error processing respiration data: {e}")
+        return result
 
 def extract_hrv_data(hrv_data):
     """
@@ -218,25 +365,41 @@ def extract_hrv_data(hrv_data):
         "last_night_hrv_status": None
     }
     
-    if not hrv_data or "hrvSummary" not in hrv_data:
+    try:
+        # Debug logging
+        print("HRV data keys:", list(hrv_data.keys()) if isinstance(hrv_data, dict) else "Not a dict")
+        
+        if not hrv_data or not isinstance(hrv_data, dict):
+            print("No valid HRV data found")
+            return result
+            
+        if "hrvSummary" not in hrv_data:
+            print("No HRV summary found")
+            return result
+        
+        hrv_summary = hrv_data["hrvSummary"]
+        if not isinstance(hrv_summary, dict):
+            print("HRV summary is not a dictionary")
+            return result
+        
+        # Extract weekly average HRV
+        if "weekly" in hrv_summary and isinstance(hrv_summary["weekly"], dict) and "avgValueInMilliseconds" in hrv_summary["weekly"]:
+            result["weekly_avg_hrv"] = hrv_summary["weekly"]["avgValueInMilliseconds"]
+        
+        # Extract last night's average HRV
+        if "lastNight" in hrv_summary and isinstance(hrv_summary["lastNight"], dict):
+            last_night = hrv_summary["lastNight"]
+            if "avgValueInMilliseconds" in last_night:
+                result["last_night_avg_hrv"] = last_night["avgValueInMilliseconds"]
+                result["avg_hrv"] = last_night["avgValueInMilliseconds"]  # Use last night as primary HRV
+            
+            if "qualifierKey" in last_night:
+                result["last_night_hrv_status"] = last_night["qualifierKey"]
+        
         return result
-    
-    hrv_summary = hrv_data.get("hrvSummary", {})
-    
-    # Extract weekly average HRV
-    if "weekly" in hrv_summary and "avgValueInMilliseconds" in hrv_summary["weekly"]:
-        result["weekly_avg_hrv"] = hrv_summary["weekly"]["avgValueInMilliseconds"]
-    
-    # Extract last night's average HRV
-    if "lastNight" in hrv_summary and "avgValueInMilliseconds" in hrv_summary["lastNight"]:
-        result["last_night_avg_hrv"] = hrv_summary["lastNight"]["avgValueInMilliseconds"]
-        result["avg_hrv"] = hrv_summary["lastNight"]["avgValueInMilliseconds"]  # Use last night as primary HRV
-    
-    # Extract status
-    if "lastNight" in hrv_summary and "qualifierKey" in hrv_summary["lastNight"]:
-        result["last_night_hrv_status"] = hrv_summary["lastNight"]["qualifierKey"]
-    
-    return result
+    except Exception as e:
+        print(f"Error processing HRV data: {e}")
+        return result
 
 def extract_garmin_data(days=90, end_date=None, save=True, verbose=True):
     """
@@ -311,9 +474,14 @@ def extract_garmin_data(days=90, end_date=None, save=True, verbose=True):
             if verbose and len(all_data) % 10 == 0:  # Log progress every 10 days
                 print(f"  Collected data for {len(all_data)} days...")
             
+            # Print success for this day
+            print(f"Successfully processed data for {date_str}")
+            
         except Exception as e:
             if verbose:
                 print(f"Error processing data for {date_str}: {e}")
+                import traceback
+                traceback.print_exc()
         
         current_date += datetime.timedelta(days=1)
     
@@ -445,9 +613,9 @@ def main():
         print("Error: garminconnect package is required. Run 'pip install garminconnect' to install it.")
         return
     
-    # Extract advanced Garmin data
+    # Changed from 90 to 3 days
     print("\nExtracting advanced Garmin metrics...")
-    advanced_df = extract_garmin_data(days=90, verbose=True)
+    advanced_df = extract_garmin_data(days=3, verbose=True)
     
     if advanced_df is not None and len(advanced_df) > 0:
         # Merge with daily data

@@ -2,7 +2,7 @@ Backlog
 
 deeper dives, trends
 
-fix mfp no info
+show old screen before update
 
 journal google behaviour
 whoop recovery
