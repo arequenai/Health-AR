@@ -68,6 +68,11 @@ def get_garmin_data(garmin_client, start_date=None):
             today_data_exists = True
             logger.info(f"Today's sleep score already exists, skipping sleep data retrieval")
     
+    # Ensure existing_data has max_sleep_body_battery column
+    if existing_data is not None and 'max_sleep_body_battery' not in existing_data.columns:
+        existing_data['max_sleep_body_battery'] = 0
+        logger.info("Added max_sleep_body_battery column to existing data")
+    
     data_list = []
     current_date = start_date
     while current_date <= end_date:
@@ -91,12 +96,15 @@ def get_garmin_data(garmin_client, start_date=None):
                         prediction = f"{hours}:{minutes:02d}"
                         data_dict[f'{race[4:]}_prediction'] = prediction
 
-            # Only get sleep score if we need it (not today or today's data doesn't exist yet)
+            # Only get sleep data if we need it (not today or today's data doesn't exist yet)
             if current_date != end_date or not today_data_exists:
-                data_dict['sleep_score'] = get_sleep_score(api, current_date)
+                sleep_score, max_body_battery = get_sleep_score(api, current_date)
+                data_dict['sleep_score'] = sleep_score
+                data_dict['max_sleep_body_battery'] = max_body_battery
             else:
                 # Skip sleep API call for today if we already have it
                 data_dict['sleep_score'] = 0  # Will be filled from existing data later
+                data_dict['max_sleep_body_battery'] = 0  # Will be filled from existing data later
 
             data_list.append(data_dict)
         except Exception as e:
@@ -262,30 +270,40 @@ def get_garmin_activities(garmin_client, start_date=datetime.date(2024, 3, 16)):
     return df
 
 def get_sleep_score(api, date):
-    """Get only the sleep score for a given date.
+    """Get sleep score and max body battery for a given date.
     
     Args:
         api: Garmin API client
         date: Date to get sleep score for (datetime.date object)
         
     Returns:
-        int: Sleep score (0 if not available)
+        tuple: (sleep_score, max_sleep_body_battery) - both 0 if not available
     """
     try:
         formatted_date = date.strftime('%Y-%m-%d')
         sleep_data = api.get_sleep_data(formatted_date)
         
-        # Direct path navigation with defaults at each step
-        if not sleep_data:
-            return 0
+        # Default values
+        sleep_score = 0
+        max_body_battery = 0
+        
+        # Extract sleep score
+        if sleep_data:
+            sleep_dto = sleep_data.get('dailySleepDTO', {})
+            scores = sleep_dto.get('sleepScores', {})
+            overall = scores.get('overall', {})
+            sleep_score = overall.get('value', 0)
             
-        sleep_dto = sleep_data.get('dailySleepDTO', {})
-        scores = sleep_dto.get('sleepScores', {})
-        overall = scores.get('overall', {})
-        return overall.get('value', 0)
+            # Extract max body battery during sleep if available
+            if "sleepBodyBattery" in sleep_data:
+                battery_values = [point.get("value", 0) for point in sleep_data.get("sleepBodyBattery", [])]
+                if battery_values:
+                    max_body_battery = max(battery_values)
+                    
+        return sleep_score, max_body_battery
     except Exception as e:
-        logger.warning(f"Failed to get sleep score for {date}: {str(e)}")
-        return 0
+        logger.warning(f"Failed to get sleep data for {date}: {str(e)}")
+        return 0, 0
 
 def run_garmin_etl():
     """Execute Garmin ETL process."""

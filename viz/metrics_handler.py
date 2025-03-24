@@ -197,7 +197,7 @@ def get_metrics() -> Optional[Dict[str, Dict[str, Dict[str, Any]]]]:
                 'secondary2': {'value': mean_glucose, 'label': 'mean day'}
             },
             'recovery': {
-                'primary': {'value': int(latest_whoop['recovery_score']), 'label': 'recovery'},
+                'primary': {'value': '-' if 'max_sleep_body_battery' not in latest_garmin or pd.isna(latest_garmin['max_sleep_body_battery']) or latest_garmin['max_sleep_body_battery'] == 0 else int(latest_garmin['max_sleep_body_battery']), 'label': 'max battery'},
                 'secondary1': {'value': int(latest_garmin['bodyBatteryMostRecentValue']), 'label': 'battery now'},
                 'secondary2': {'value': int(latest_garmin['averageStressLevel']), 'label': 'stress'}
             },
