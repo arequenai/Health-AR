@@ -4,6 +4,7 @@ from viz.dashboard_components import display_metric_box
 from viz.metrics_handler import get_metrics
 from viz.styles import DASHBOARD_CSS
 from etl import run_garmin_etl, run_whoop_etl, run_mfp_daily_only, run_gsheets_etl, run_glucose_etl
+import threading
 
 # Set page config
 st.set_page_config(
@@ -30,8 +31,11 @@ header {visibility: hidden;}
 """
 st.markdown(hide_st_style, unsafe_allow_html=True)
 
-# Auto-update data on page load
-with st.spinner('Updating data...'):
+# First, display the metrics with current data
+metrics = get_metrics()
+
+# Function to run ETL processes and then rerun the app
+def run_background_etl():
     try:
         # Run ETL processes in parallel
         def run_etl(etl_func):
@@ -50,14 +54,22 @@ with st.spinner('Updating data...'):
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [executor.submit(run_etl, func) for func in etl_tasks]
             for future in concurrent.futures.as_completed(futures):
-                # Just wait for completion, no need to track timing
+                # Just wait for completion
                 future.result()
+        
+        # Rerun the app to refresh the data
+        st.rerun()
                 
     except Exception as e:
-        st.error(f"Update failed: {str(e)}")
+        # Silent exception handling - log but don't show to user
+        print(f"Background update failed: {str(e)}")
 
-# Main layout
-metrics = get_metrics()
+# Start background thread for ETL processing
+if 'etl_started' not in st.session_state:
+    st.session_state.etl_started = True
+    threading.Thread(target=run_background_etl).start()
+
+# Main layout - display immediately with current data
 if metrics:
     for metric_name in ['Nutrition', 'Glucose', 'Recovery', 'Sleep', 'Running', 'Strength']:
         display_metric_box(metric_name,
