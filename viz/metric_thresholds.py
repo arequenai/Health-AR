@@ -28,6 +28,7 @@ SECONDARY_METRIC_THRESHOLDS = {
     
     # Sleep metrics
     'sleep.hrs in bed': {'good_above': 7.5, 'bad_below': 6},
+    'sleep.behavior': {'good_above': 100, 'bad_below': 70},
     
     # Running metrics
     'running.km run L7d': {'good_above': 40, 'bad_below': 20},

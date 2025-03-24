@@ -139,7 +139,7 @@ def get_journal_data(client, spreadsheet_url, filename):
             'nutrition': ['nutrition'],
             'bed_behavior': ['bed behavior', 'bed_behavior', 'behavior'],
             'alcohol': ['alcohol', 'drink', 'drinks'],
-            'bed_full': ['full bed', 'bed_full', 'fullbed'],
+            'bed_full': ['full bed', 'bed_full', 'fullbed', 'bed full'],
             'earplugs': ['earplugs', 'ear plugs', 'ear-plugs'],
             'stretch': ['stretch', 'stretching'],
             'sick': ['sick', 'illness', 'sickness']
@@ -198,11 +198,21 @@ def get_journal_data(client, spreadsheet_url, filename):
         for col in boolean_columns:
             if col in df_renamed.columns:
                 # Map various true/false values to YES/NO
-                df_renamed[col] = df_renamed[col].apply(lambda x: 
-                    'YES' if pd.notna(x) and str(x).lower() in ['true', 'yes', 'y', '1', 'checked', 'check', 'si', 'sí'] 
-                    else 'NO' if pd.notna(x) and str(x).lower() in ['false', 'no', 'n', '0', 'unchecked', ''] 
-                    else x
-                )
+                if col == 'bed_full':
+                    # Special handling for bed_full that preserves exact "Yes" and "No" values
+                    df_renamed[col] = df_renamed[col].apply(lambda x: 
+                        x if pd.notna(x) and str(x).lower() in ['yes', 'no'] 
+                        else 'Yes' if pd.notna(x) and str(x).lower() in ['true', 'y', '1', 'checked', 'check', 'si', 'sí']
+                        else 'No' if pd.notna(x) and str(x).lower() in ['false', 'n', '0', 'unchecked', '']
+                        else x
+                    )
+                else:
+                    # Standard handling for other boolean columns
+                    df_renamed[col] = df_renamed[col].apply(lambda x: 
+                        'YES' if pd.notna(x) and str(x).lower() in ['true', 'yes', 'y', '1', 'checked', 'check', 'si', 'sí'] 
+                        else 'NO' if pd.notna(x) and str(x).lower() in ['false', 'no', 'n', '0', 'unchecked', ''] 
+                        else x
+                    )
         
         # Calculate individual component scores and total sleep score
         def calculate_bed_behavior_score(value):
@@ -250,8 +260,22 @@ def get_journal_data(client, spreadsheet_url, filename):
                 return 0
         
         def calculate_bed_full_score(value):
-            value = str(value).lower() if pd.notna(value) else ''
-            return 20 if value == 'no' else 0
+            if pd.isna(value):
+                return 0
+                
+            value_lower = str(value).lower()
+            
+            # Handle simple "Yes" or "No" responses (exact match with case insensitivity)
+            if value_lower == 'no':
+                return 20
+            elif value_lower == 'yes':
+                return 0
+                
+            # Log unexpected values for debugging
+            if value_lower not in ['yes', 'no']:
+                logger.warning(f"Unexpected value for bed_full: '{value}', defaulting to 0 score")
+                
+            return 0
         
         # Add component scores
         df_renamed['bed_behavior_score'] = df_renamed['bed_behavior'].apply(calculate_bed_behavior_score)
