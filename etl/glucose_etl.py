@@ -193,35 +193,63 @@ def save_to_csv(df, filename='glucose_data.csv'):
     logger.info(f"Data saved to {file_path}")
     return file_path
 
-def generate_visualizations(daily_df):
+def get_glucose_data_for_day(date):
     """
-    Generate basic visualizations from the data
+    Get detailed glucose data for a specific day.
+    
+    Args:
+        date: Date to get glucose data for (datetime.date object)
+        
+    Returns:
+        DataFrame with timestamps and glucose values for the day
     """
     try:
-        os.makedirs('data/visualizations', exist_ok=True)
-        
-        if daily_df is not None and not daily_df.empty:
-            # Daily glucose plot
-            plt.figure(figsize=(12, 6))
-            plt.plot(daily_df['date'], daily_df['mean_glucose'], 'b-', label='Mean')
-            plt.plot(daily_df['date'], daily_df['min_glucose'], 'g--', label='Min')
-            plt.plot(daily_df['date'], daily_df['max_glucose'], 'r--', label='Max')
-            plt.plot(daily_df['date'], daily_df['fasting_glucose'], 'y-', marker='o', label='Fasting (6am)')
-            plt.fill_between(daily_df['date'], daily_df['min_glucose'], daily_df['max_glucose'], alpha=0.2)
-            plt.axhline(y=70, color='r', linestyle='-', alpha=0.3)
-            plt.axhline(y=180, color='r', linestyle='-', alpha=0.3)
-            plt.title('Daily Glucose Trends')
-            plt.xlabel('Date')
-            plt.ylabel('Glucose (mg/dL)')
-            plt.legend()
-            plt.tight_layout()
-            plt.savefig('data/visualizations/daily_glucose_trends.png')
+        # If date is a datetime, convert to date
+        if hasattr(date, 'date'):
+            date = date.date()
             
-            logger.info("Visualizations saved to data/visualizations/ directory")
-            return 'data/visualizations/daily_glucose_trends.png'
+        # Format to string for comparison
+        date_str = date.strftime('%Y-%m-%d')
+        
+        # Try to read from raw glucose data
+        file_path = os.path.join('data', 'glucose_raw.csv')
+        if not os.path.exists(file_path):
+            logger.warning(f"No raw glucose data found at {file_path}")
+            return pd.DataFrame(columns=['datetime', 'glucose'])
+            
+        # Read the raw data
+        df = pd.read_csv(file_path)
+        
+        # Convert timestamps to datetime
+        if 'date' in df.columns:
+            df['datetime'] = pd.to_datetime(df['date'])
+            # Create a date string column for filtering
+            df['date_str'] = df['datetime'].dt.strftime('%Y-%m-%d')
+            
+            # Filter to the requested date
+            df_day = df[df['date_str'] == date_str].copy()
+            
+            if df_day.empty:
+                logger.warning(f"No glucose data found for {date_str}")
+                return pd.DataFrame(columns=['datetime', 'glucose'])
+                
+            # Prepare output DataFrame with required columns
+            result = pd.DataFrame({
+                'datetime': df_day['datetime'],
+                'glucose': df_day['sgv']
+            })
+            
+            # Sort by datetime
+            result = result.sort_values('datetime')
+            
+            return result
+        else:
+            logger.warning("Glucose data does not have 'date' column")
+            return pd.DataFrame(columns=['datetime', 'glucose'])
+                
     except Exception as e:
-        logger.error(f"Error generating visualizations: {str(e)}")
-        return None
+        logger.warning(f"Failed to get glucose data for {date}: {str(e)}")
+        return pd.DataFrame(columns=['datetime', 'glucose'])
 
 def run_glucose_etl():
     """
@@ -276,12 +304,6 @@ def run_glucose_etl():
     logger.info(f"Mean Glucose: {overall_mean:.1f} mg/dL")
     logger.info(f"Min Glucose: {overall_min:.1f} mg/dL")
     logger.info(f"Max Glucose: {overall_max:.1f} mg/dL")
-    
-    # Generate visualizations
-    try:
-        vis_file = generate_visualizations(merged_daily_df)
-    except ImportError:
-        logger.warning("Matplotlib not installed. Skipping visualizations.")
     
     return daily_file
 

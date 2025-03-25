@@ -271,4 +271,32 @@ def get_sleep_data(selected_date):
         }
     except Exception as e:
         print(f"Error getting sleep data: {e}")
+        return None
+
+def get_glucose_day_data(selected_date):
+    """
+    Get glucose data for a specific date.
+    
+    Args:
+        selected_date (datetime): The date to get data for
+        
+    Returns:
+        DataFrame: Glucose data with datetime and glucose values columns
+    """
+    try:
+        # Convert to datetime.date if it's a Timestamp
+        if hasattr(selected_date, 'date'):
+            date_obj = selected_date.date()
+        else:
+            date_obj = selected_date
+        
+        from etl.glucose_etl import get_glucose_data_for_day
+        df = get_glucose_data_for_day(date_obj)
+        
+        if df is not None and not df.empty:
+            return df
+        else:
+            return None
+    except Exception as e:
+        print(f"Error getting glucose data for day: {e}")
         return None 

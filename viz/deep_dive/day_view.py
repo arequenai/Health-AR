@@ -4,132 +4,92 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 import pytz
-from .data_utils import get_day_data, get_body_battery_data, get_stress_data, get_sleep_data
+from .data_utils import get_day_data, get_body_battery_data, get_stress_data, get_sleep_data, get_glucose_day_data
 from .styles import DEEP_DIVE_CSS
 
 def create_day_view_chart(selected_date):
     """
-    Create a day view chart showing multiple health metrics over time.
+    Create a comprehensive day view chart showing various health metrics.
     
     Args:
-        selected_date (datetime or str): The date to visualize
-    
+        selected_date (datetime): The date to create the chart for
+        
     Returns:
-        fig: Plotly figure object
+        plotly.graph_objects.Figure: The created figure
     """
-    # Convert to datetime if string
-    if isinstance(selected_date, str):
-        selected_date = pd.to_datetime(selected_date)
-    
-    # Get data for the selected date
+    # Get all the data for the selected date
     data = get_day_data(selected_date)
     
-    # Get time series data
+    # Get body battery data
     body_battery_data = get_body_battery_data(selected_date)
+    
+    # Get stress data
     stress_data = get_stress_data(selected_date)
+    
+    # Get sleep data
     sleep_data = get_sleep_data(selected_date)
     
-    # Create an empty Plotly figure
+    # Get detailed glucose data
+    glucose_data = get_glucose_day_data(selected_date)
+    
+    # Create the figure
     fig = go.Figure()
     
-    # Set up the figure layout
+    # Set up the x-axis to show hours of the day
+    day_start = datetime.combine(selected_date.date(), datetime.min.time())
+    day_end = day_start + timedelta(days=1)
+    
+    # Setup the layout with multiple y-axes
     fig.update_layout(
-        title=f'Daily Health Overview: {selected_date.strftime("%A, %B %d, %Y")}',
-        height=600,
-        margin=dict(l=40, r=40, t=80, b=40),
-        plot_bgcolor='rgba(0, 0, 0, 0)',
-        paper_bgcolor='rgba(0, 0, 0, 0)',
-        font=dict(color='rgba(255, 255, 255, 0.85)'),
         xaxis=dict(
-            title='Time',
-            gridcolor='rgba(100, 100, 100, 0.2)',
-            showgrid=True,
-            range=[
-                datetime.combine(selected_date.date(), datetime.min.time()),
-                datetime.combine(selected_date.date() + timedelta(days=1), datetime.min.time())
-            ]
+            title="Time of Day",
+            type="date",
+            range=[day_start, day_end],
+            tickformat="%H:%M",
+            dtick=3600000,  # 1 hour in milliseconds
         ),
         yaxis=dict(
-            title=dict(
-                text='Glucose (mg/dL)',
-                font=dict(color='white')
-            ),
-            gridcolor='rgba(100, 100, 100, 0.2)', 
-            showgrid=True,
-            range=[40, 200]  # Set a reasonable range for glucose
-        ),
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1
-        )
-    )
-    
-    # Add secondary y-axes for body battery and stress
-    fig.update_layout(
-        yaxis2=dict(
-            title=dict(
-                text='Body Battery',
-                font=dict(color='#52b6d3')
-            ),
-            tickfont=dict(color='#52b6d3'),
-            anchor="x",
-            overlaying="y",
-            side="right",
+            title="Body Battery",
             range=[0, 100],
+            side="left",
+            showgrid=True
+        ),
+        yaxis2=dict(
+            title="Glucose (mg/dL)",
+            range=[40, 300],
+            side="right",
+            overlaying="y",
             showgrid=False,
+            anchor="x"
         ),
         yaxis3=dict(
-            title=dict(
-                text='Stress',
-                font=dict(color='#d3525b')
-            ),
-            tickfont=dict(color='#d3525b'),
-            anchor="free",
-            overlaying="y",
-            side="right",
-            position=0.95,
+            title="Stress",
             range=[0, 100],
+            side="right",
+            overlaying="y",
             showgrid=False,
-        )
+            anchor="free",
+            position=1.0
+        ),
+        margin=dict(l=50, r=50, t=50, b=50),
+        height=600,
+        hovermode="x unified"
     )
-
-    # Add glucose data if available
-    if data['glucose_raw'] is not None and not data['glucose_raw'].empty:
-        glucose_data = data['glucose_raw']
-        
-        # Add glucose trace
-        fig.add_trace(go.Scatter(
-            x=glucose_data['datetime'],
-            y=glucose_data['glucose'],
-            mode='lines',
-            name='Glucose',
-            line=dict(color='white', width=2),
-        ))
-        
-        # Add reference bands
-        fig.add_shape(
-            type="rect",
-            xref="paper", yref="y",
-            x0=0, y0=140, x1=1, y1=200,
-            fillcolor="red", opacity=0.2, layer="below", line_width=0,
-        )
-        
-        fig.add_shape(
-            type="rect",
-            xref="paper", yref="y",
-            x0=0, y0=70, x1=1, y1=100,
-            fillcolor="green", opacity=0.2, layer="below", line_width=0,
-        )
-        
-        fig.add_shape(
-            type="rect",
-            xref="paper", yref="y",
-            x0=0, y0=0, x1=1, y1=70,
-            fillcolor="yellow", opacity=0.2, layer="below", line_width=0,
-        )
+    
+    # Add threshold lines for glucose
+    fig.add_shape(
+        type="line",
+        xref="paper", yref="y2",
+        x0=0, x1=1, y0=70, y1=70,
+        line=dict(color="rgba(255, 0, 0, 0.3)", width=1, dash="dash"),
+    )
+    
+    fig.add_shape(
+        type="line",
+        xref="paper", yref="y2",
+        x0=0, x1=1, y0=180, y1=180,
+        line=dict(color="rgba(255, 0, 0, 0.3)", width=1, dash="dash"),
+    )
     
     # Add body battery data if available
     if body_battery_data is not None and not body_battery_data.empty:
@@ -138,36 +98,62 @@ def create_day_view_chart(selected_date):
             y=body_battery_data['body_battery'],
             mode='lines',
             name='Body Battery',
-            line=dict(color='#52b6d3', width=2),
+            line=dict(color='#4CAF50', width=3),
+            hovertemplate='%{y:.0f}'
+        ))
+    elif data['garmin'] is not None and 'bodyBatteryMostRecentValue' in data['garmin'] and not pd.isna(data['garmin']['bodyBatteryMostRecentValue']):
+        # If we don't have detailed time series data, show the daily value as a horizontal line
+        body_battery_value = data['garmin']['bodyBatteryMostRecentValue']
+        fig.add_shape(
+            type="line",
+            xref="paper", yref="y",
+            x0=0, x1=1, y0=body_battery_value, y1=body_battery_value,
+            line=dict(color='#4CAF50', width=2, dash='dash'),
+        )
+    
+    # Add glucose data if available
+    if glucose_data is not None and not glucose_data.empty:
+        fig.add_trace(go.Scatter(
+            x=glucose_data['datetime'],
+            y=glucose_data['glucose'],
+            mode='lines',
+            name='Glucose',
+            line=dict(color='#FF5722', width=3),
+            yaxis='y2',
+            hovertemplate='%{y:.0f} mg/dL'
+        ))
+    elif data['glucose_daily'] is not None:
+        # If we don't have detailed time series data, show the daily average as a horizontal line
+        mean_glucose = data['glucose_daily']['mean_glucose']
+        fig.add_shape(
+            type="line",
+            xref="paper", yref="y2",
+            x0=0, x1=1, y0=mean_glucose, y1=mean_glucose,
+            line=dict(color='#FF5722', width=2, dash='dash'),
+        )
+        
+        # Add annotation for mean glucose
+        fig.add_annotation(
+            xref="paper", yref="y2",
+            x=0.02, y=mean_glucose,
+            text=f"Avg: {int(mean_glucose)} mg/dL",
+            showarrow=False,
+            font=dict(color='#FF5722', size=10),
+            bgcolor="rgba(0,0,0,0.5)",
+            bordercolor="#FF5722",
+            borderwidth=1,
+        )
+        
+        # Add fasting glucose marker
+        fasting_glucose = data['glucose_daily']['fasting_glucose']
+        fig.add_trace(go.Scatter(
+            x=[day_start + timedelta(hours=6)],  # Assume fasting is at 6 AM
+            y=[fasting_glucose],
+            mode='markers',
+            name='Fasting Glucose',
+            marker=dict(color='#FFEB3B', size=10, symbol='star'),
             yaxis='y2'
         ))
-    elif data['garmin'] is not None:
-        # If detailed body battery data isn't available, just show the max and current values
-        if 'max_sleep_body_battery' in data['garmin'] and not pd.isna(data['garmin']['max_sleep_body_battery']):
-            # Show point for max battery from sleep
-            morning_time = datetime.combine(selected_date.date(), datetime.strptime('08:00', '%H:%M').time())
-            
-            fig.add_trace(go.Scatter(
-                x=[morning_time],
-                y=[data['garmin']['max_sleep_body_battery']],
-                mode='markers',
-                name='Max Sleep Body Battery',
-                marker=dict(color='#52b6d3', size=10),
-                yaxis='y2'
-            ))
-        
-        if 'bodyBatteryMostRecentValue' in data['garmin'] and not pd.isna(data['garmin']['bodyBatteryMostRecentValue']):
-            # Show point for current battery
-            end_of_day = datetime.combine(selected_date.date(), datetime.strptime('22:00', '%H:%M').time())
-            
-            fig.add_trace(go.Scatter(
-                x=[end_of_day],
-                y=[data['garmin']['bodyBatteryMostRecentValue']],
-                mode='markers',
-                name='Current Body Battery',
-                marker=dict(color='#52b6d3', size=10),
-                yaxis='y2'
-            ))
     
     # Add stress data if available
     if stress_data is not None and not stress_data.empty:
