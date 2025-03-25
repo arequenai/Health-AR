@@ -3,7 +3,7 @@ import numpy as np
 from datetime import datetime, timedelta
 import os
 from etl import config
-from etl.garmin_etl import init_garmin, get_body_battery_data_for_day, get_stress_data_for_day
+from etl.garmin_etl import init_garmin, get_body_battery_data_for_day, get_stress_data_for_day, get_sleep_data_for_day
 
 # Initialize the Garmin client globally to avoid re-initialization for each data fetch
 garmin_client = None
@@ -205,7 +205,8 @@ def get_stress_data(selected_date):
 def get_sleep_data(selected_date):
     """
     Get sleep data for a specific date.
-    Uses the Garmin daily data to extract sleep information.
+    First tries to get data directly from Garmin API,
+    falls back to reading from CSV files if API fails.
     
     Args:
         selected_date (datetime): The date to get data for
@@ -213,6 +214,36 @@ def get_sleep_data(selected_date):
     Returns:
         dict: Dictionary with sleep start, end, and duration
     """
+    global garmin_client
+    
+    # First try to get data from Garmin API
+    if garmin_client:
+        try:
+            # Convert to datetime.date if it's a Timestamp
+            if hasattr(selected_date, 'date'):
+                date_obj = selected_date.date()
+            else:
+                date_obj = selected_date
+            
+            sleep_data = get_sleep_data_for_day(garmin_client, date_obj)
+            
+            if sleep_data and sleep_data['start_time'] and sleep_data['end_time']:
+                return {
+                    'sleep_start': sleep_data['start_time'],
+                    'sleep_end': sleep_data['end_time'],
+                    'sleep_duration': sleep_data['duration_seconds'] / 3600,
+                    'deep_sleep': sleep_data['deep_sleep_seconds'] / 3600,
+                    'light_sleep': sleep_data['light_sleep_seconds'] / 3600,
+                    'rem_sleep': sleep_data['rem_sleep_seconds'] / 3600,
+                    'awake': sleep_data['awake_seconds'] / 3600,
+                    'sleep_score': sleep_data['sleep_score'],
+                    'sleep_levels': sleep_data['sleep_levels']
+                }
+        except Exception as e:
+            print(f"Error getting sleep data from API: {e}")
+            # Fall back to file-based approach
+    
+    # Fall back to the file-based approach if API fails or returns no data
     try:
         df_garmin = pd.read_csv(config.GARMIN_DAILY_FILE)
         df_garmin['date'] = pd.to_datetime(df_garmin['date'])

@@ -207,24 +207,88 @@ def create_day_view_chart(selected_date):
         sleep_end = sleep_data['sleep_end']
         sleep_duration = sleep_data['sleep_duration']
         
-        # Add sleep rectangle
-        fig.add_shape(
-            type="rect",
-            xref="x", yref="paper",
-            x0=sleep_start, x1=sleep_end, y0=0, y1=0.2,
-            fillcolor="rgba(100, 149, 237, 0.3)",
-            line=dict(color="cornflowerblue", width=1),
-            layer="below"
-        )
-        
         # Add sleep label
         sleep_hours = int(sleep_duration)
         sleep_minutes = int((sleep_duration - sleep_hours) * 60)
+        sleep_text = f"Sleep ({sleep_hours}h {sleep_minutes}m)"
+        
+        # Add sleep score if available
+        if 'sleep_score' in sleep_data and sleep_data['sleep_score'] > 0:
+            sleep_text += f" - Score: {sleep_data['sleep_score']}"
+        
+        # If we have detailed sleep levels, display them
+        if 'sleep_levels' in sleep_data and sleep_data['sleep_levels']:
+            # Define colors for sleep stages - updated to match the image
+            sleep_stage_colors = {
+                0: "#e986e0",  # Awake - lighter purple
+                1: "#6eaff5",  # Light sleep - lighter blue
+                2: "#1e58b3",  # Deep sleep - dark blue
+                3: "#d53dd3"   # REM sleep - dark purple
+            }
+            sleep_stage_names = {
+                0: "Despierto",
+                1: "Ligero",
+                2: "Profundo",
+                3: "MOR"
+            }
+            
+            for level in sleep_data['sleep_levels']:
+                try:
+                    start_time = datetime.strptime(level['startGMT'], '%Y-%m-%dT%H:%M:%S.%f') if '.' in level['startGMT'] else datetime.strptime(level['startGMT'], '%Y-%m-%dT%H:%M:%S.0')
+                    end_time = datetime.strptime(level['endGMT'], '%Y-%m-%dT%H:%M:%S.%f') if '.' in level['endGMT'] else datetime.strptime(level['endGMT'], '%Y-%m-%dT%H:%M:%S.0')
+                    activity_level = level['activityLevel']
+                    
+                    # Map Garmin sleep levels to our visualization
+                    # In the Garmin API:
+                    # activityLevel values:
+                    # 0.0 = Deep sleep
+                    # 1.0 = Light sleep
+                    # 2.0 = REM sleep
+                    # 3.0 = Awake
+                    stage = 0  # Default to Awake
+                    
+                    # Check the exact value type
+                    print(f"Sleep level: {activity_level}, type: {type(activity_level)}")
+                    
+                    # Mapping based on the API response format
+                    if activity_level == 0.0:
+                        stage = 2  # Deep sleep
+                    elif activity_level == 1.0:
+                        stage = 1  # Light sleep
+                    elif activity_level == 2.0:
+                        stage = 3  # REM sleep
+                    elif activity_level == 3.0:
+                        stage = 0  # Awake
+                    
+                    # Add colored rectangle for sleep stage
+                    fig.add_shape(
+                        type="rect",
+                        xref="x", yref="paper",
+                        x0=start_time, x1=end_time, y0=0.03, y1=0.17,
+                        fillcolor=sleep_stage_colors.get(stage, "#a6a6a6"),
+                        line=dict(width=0),
+                        layer="below"
+                    )
+                except Exception as e:
+                    print(f"Error processing sleep level: {e}")
+                    continue
+        else:
+            # If we don't have detailed sleep levels, add a basic rectangle for the sleep period
+            fig.add_shape(
+                type="rect",
+                xref="x", yref="paper",
+                x0=sleep_start, x1=sleep_end, y0=0.03, y1=0.17,
+                fillcolor="#6eaff5",  # Light blue for basic sleep visualization
+                line=dict(color="#1e58b3", width=1),
+                layer="below"
+            )
+            
+        # Add the sleep label annotation
         fig.add_annotation(
             x=sleep_start + (sleep_end - sleep_start) / 2,
             y=0.1,
             yref="paper",
-            text=f"Sleep ({sleep_hours}h {sleep_minutes}m)",
+            text=sleep_text,
             showarrow=False,
             font=dict(color="cornflowerblue", size=12),
             bgcolor="rgba(0,0,0,0.5)",
@@ -389,7 +453,27 @@ def display_day_view():
     with col1:
         st.markdown('<div class="metric-box">', unsafe_allow_html=True)
         st.subheader("Sleep")
-        if data['garmin'] is not None and 'sleepingSeconds' in data['garmin'] and not pd.isna(data['garmin']['sleepingSeconds']):
+        
+        # Check if we have detailed sleep data from the API
+        sleep_data = get_sleep_data(selected_date)
+        if sleep_data and 'duration_seconds' in sleep_data and sleep_data['duration_seconds'] > 0:
+            sleep_hours = sleep_data['duration_seconds'] / 3600
+            st.metric("Sleep Duration", f"{sleep_hours:.2f} hours")
+            
+            if 'sleep_score' in sleep_data and sleep_data['sleep_score'] > 0:
+                st.metric("Sleep Score", f"{int(sleep_data['sleep_score'])}")
+                
+            # Display sleep stages if available
+            if 'deep_sleep' in sleep_data and sleep_data['deep_sleep'] > 0:
+                col_a, col_b = st.columns(2)
+                with col_a:
+                    st.metric("Deep Sleep", f"{sleep_data['deep_sleep']:.1f}h")
+                    st.metric("Light Sleep", f"{sleep_data['light_sleep']:.1f}h")
+                with col_b:
+                    st.metric("REM Sleep", f"{sleep_data['rem_sleep']:.1f}h")
+                    st.metric("Awake", f"{sleep_data['awake']:.1f}h")
+                
+        elif data['garmin'] is not None and 'sleepingSeconds' in data['garmin'] and not pd.isna(data['garmin']['sleepingSeconds']):
             sleep_hours = data['garmin']['sleepingSeconds'] / 3600
             st.metric("Sleep Duration", f"{sleep_hours:.2f} hours")
             

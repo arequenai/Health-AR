@@ -457,6 +457,92 @@ def get_stress_data_for_day(garmin_client, date):
         logger.warning(f"Failed to get stress data for {date}: {str(e)}")
         return pd.DataFrame(columns=['datetime', 'stress'])
 
+def get_sleep_data_for_day(garmin_client, date):
+    """
+    Get detailed sleep data for a specific day.
+    
+    Args:
+        garmin_client: Initialized Garmin API client
+        date: Date to get sleep data for (datetime.date object)
+        
+    Returns:
+        Dictionary with sleep information including:
+        - start_time: datetime object for sleep start
+        - end_time: datetime object for sleep end
+        - duration_seconds: total sleep duration in seconds
+        - deep_sleep_seconds: deep sleep duration in seconds
+        - light_sleep_seconds: light sleep duration in seconds
+        - rem_sleep_seconds: REM sleep duration in seconds
+        - awake_seconds: time awake during sleep in seconds
+        - sleep_score: sleep score value (0-100)
+        - sleep_levels: detailed sleep stages
+    """
+    try:
+        # Format the date for API call
+        formatted_date = date.strftime('%Y-%m-%d')
+        
+        # Get the sleep data for the day
+        sleep_data = garmin_client.get_sleep_data(formatted_date)
+        
+        # Create a default response with empty values
+        result = {
+            'start_time': None,
+            'end_time': None,
+            'duration_seconds': 0,
+            'deep_sleep_seconds': 0,
+            'light_sleep_seconds': 0,
+            'rem_sleep_seconds': 0,
+            'awake_seconds': 0,
+            'sleep_score': 0,
+            'sleep_levels': []
+        }
+        
+        if not sleep_data or 'dailySleepDTO' not in sleep_data:
+            logger.warning(f"No sleep data found for {date}")
+            return result
+        
+        daily_sleep = sleep_data['dailySleepDTO']
+        
+        # Extract sleep start and end times
+        if 'sleepStartTimestampGMT' in daily_sleep and daily_sleep['sleepStartTimestampGMT']:
+            start_time_ms = daily_sleep['sleepStartTimestampGMT']
+            result['start_time'] = dt.fromtimestamp(start_time_ms / 1000.0)
+        
+        if 'sleepEndTimestampGMT' in daily_sleep and daily_sleep['sleepEndTimestampGMT']:
+            end_time_ms = daily_sleep['sleepEndTimestampGMT']
+            result['end_time'] = dt.fromtimestamp(end_time_ms / 1000.0)
+        
+        # Extract sleep durations
+        result['duration_seconds'] = daily_sleep.get('sleepTimeSeconds', 0)
+        result['deep_sleep_seconds'] = daily_sleep.get('deepSleepSeconds', 0)
+        result['light_sleep_seconds'] = daily_sleep.get('lightSleepSeconds', 0)
+        result['rem_sleep_seconds'] = daily_sleep.get('remSleepSeconds', 0)
+        result['awake_seconds'] = daily_sleep.get('awakeSleepSeconds', 0)
+        
+        # Extract sleep score
+        if 'sleepScores' in daily_sleep and 'overall' in daily_sleep['sleepScores']:
+            result['sleep_score'] = daily_sleep['sleepScores']['overall'].get('value', 0)
+        
+        # Extract detailed sleep levels if available
+        if 'sleepLevels' in sleep_data:
+            result['sleep_levels'] = sleep_data['sleepLevels']
+        
+        return result
+    
+    except Exception as e:
+        logger.warning(f"Failed to get sleep data for {date}: {str(e)}")
+        return {
+            'start_time': None,
+            'end_time': None,
+            'duration_seconds': 0,
+            'deep_sleep_seconds': 0,
+            'light_sleep_seconds': 0,
+            'rem_sleep_seconds': 0,
+            'awake_seconds': 0,
+            'sleep_score': 0,
+            'sleep_levels': []
+        }
+
 def run_garmin_etl():
     """Execute Garmin ETL process."""
     load_dotenv("Credentials.env")
