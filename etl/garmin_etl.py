@@ -234,6 +234,8 @@ def get_garmin_activities(garmin_client, start_date=datetime.date(2024, 3, 16)):
         
         activity_dict = {
             'date': activity_date,
+            'start_time_local': activity.get('startTimeLocal', ''),
+            'start_time_utc': activity.get('startTimeGMT', ''),
             'type': activity.get('activityType', {}).get('typeKey', 'unknown'),
             'duration': activity.get('duration', 0),
             'distance': activity.get('distance', 0),
@@ -264,7 +266,7 @@ def get_garmin_activities(garmin_client, start_date=datetime.date(2024, 3, 16)):
     
     # Convert date to datetime for proper sorting and deduplication
     df['date'] = pd.to_datetime(df['date'])
-    df = df.sort_values('date').drop_duplicates(subset=['date', 'type', 'duration'], keep='last')
+    df = df.sort_values('date').drop_duplicates(subset=['date', 'type', 'duration', 'start_time_local'], keep='last')
     # Convert back to string format
     df['date'] = df['date'].dt.strftime('%Y-%m-%d')
     

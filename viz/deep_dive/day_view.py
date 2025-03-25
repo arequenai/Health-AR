@@ -255,229 +255,128 @@ def create_day_view_chart(selected_date):
                     elif activity_level == 3.0:
                         stage = 0  # Awake
                     
-                    # Add colored rectangle for sleep stage
+                    # Add the colored rectangle for this sleep stage
                     fig.add_shape(
                         type="rect",
-                        xref="x", yref="paper",
-                        x0=start_time, x1=end_time, y0=0.03, y1=0.17,
-                        fillcolor=sleep_stage_colors.get(stage, "#a6a6a6"),
-                        line=dict(width=0),
-                        layer="below"
+                        x0=start_time, x1=end_time,
+                        y0=0, y1=100,
+                        fillcolor=sleep_stage_colors[stage],
+                        opacity=0.7,
+                        layer="below",
+                        line_width=0,
                     )
                 except Exception as e:
-                    print(f"Error processing sleep level: {e}")
-                    continue
+                    st.error(f"Error processing sleep level: {e}")
         else:
-            # If we don't have detailed sleep levels, add a basic rectangle for the sleep period
-            fig.add_shape(
-                type="rect",
-                xref="x", yref="paper",
-                x0=sleep_start, x1=sleep_end, y0=0.03, y1=0.17,
-                fillcolor="#6eaff5",  # Light blue for basic sleep visualization
-                line=dict(color="#1e58b3", width=1),
-                layer="below"
-            )
-            
-        # Add the sleep label annotation
-        fig.add_annotation(
-            x=sleep_start + (sleep_end - sleep_start) / 2,
-            y=0.1,
-            yref="paper",
-            text=sleep_text,
-            showarrow=False,
-            font=dict(color="cornflowerblue", size=12),
-            bgcolor="rgba(0,0,0,0.5)",
-        )
-    
-    # Check for sleep that starts on the current day (evening) but extends to the next day
-    next_day = selected_date + pd.Timedelta(days=1)
-    next_day_sleep = get_sleep_data(next_day)
-    
-    if next_day_sleep is not None and next_day_sleep['sleep_start'] is not None:
-        sleep_start = next_day_sleep['sleep_start']
-        
-        # Only include if sleep started on the selected date (after 10 PM)
-        if sleep_start.date() == selected_date.date() or (
-            sleep_start.date() == next_day.date() and sleep_start.hour < 4
-        ):
-            sleep_end = next_day_sleep['sleep_end']
-            sleep_duration = next_day_sleep['sleep_duration']
-            
-            # Add sleep label for evening sleep
-            sleep_hours = int(sleep_duration)
-            sleep_minutes = int((sleep_duration - sleep_hours) * 60)
-            sleep_text = f"Sleep ({sleep_hours}h {sleep_minutes}m)"
-            
-            # Add sleep score if available
-            if 'sleep_score' in next_day_sleep and next_day_sleep['sleep_score'] > 0:
-                sleep_text += f" - Score: {next_day_sleep['sleep_score']}"
-            
-            # If we have detailed sleep levels, display them
-            if 'sleep_levels' in next_day_sleep and next_day_sleep['sleep_levels']:
-                # Use the same color scheme as for the morning sleep
-                for level in next_day_sleep['sleep_levels']:
-                    try:
-                        # Parse timestamps - we need to handle both formats
-                        if isinstance(level['startGMT'], str):
-                            start_time = datetime.strptime(level['startGMT'], '%Y-%m-%dT%H:%M:%S.%f') if '.' in level['startGMT'] else datetime.strptime(level['startGMT'], '%Y-%m-%dT%H:%M:%S.0')
-                            end_time = datetime.strptime(level['endGMT'], '%Y-%m-%dT%H:%M:%S.%f') if '.' in level['endGMT'] else datetime.strptime(level['endGMT'], '%Y-%m-%dT%H:%M:%S.0')
-                            
-                            # Convert to local time
-                            local_tz = datetime.now().astimezone().tzinfo
-                            start_time = start_time.replace(tzinfo=pytz.UTC).astimezone(local_tz).replace(tzinfo=None)
-                            end_time = end_time.replace(tzinfo=pytz.UTC).astimezone(local_tz).replace(tzinfo=None)
-                        else:
-                            # If timestamps are already millisecond values
-                            start_time = datetime.fromtimestamp(level['startGMT']/1000)
-                            end_time = datetime.fromtimestamp(level['endGMT']/1000)
-                            
-                        activity_level = level['activityLevel']
-                        
-                        # Only include sleep levels that fall on the current day
-                        if start_time.date() != selected_date.date() and start_time.hour >= 4:
-                            continue
-                        
-                        # Adjust end time if it's on the next day
-                        if end_time.date() > selected_date.date():
-                            end_time = datetime.combine(selected_date.date() + timedelta(days=1), datetime.min.time())
-                        
-                        # Map Garmin sleep levels to our visualization
-                        stage = 0  # Default to Awake
-                        if activity_level == 0.0:
-                            stage = 2  # Deep sleep
-                        elif activity_level == 1.0:
-                            stage = 1  # Light sleep
-                        elif activity_level == 2.0:
-                            stage = 3  # REM sleep
-                        elif activity_level == 3.0:
-                            stage = 0  # Awake
-                        
-                        # Add colored rectangle for sleep stage
-                        fig.add_shape(
-                            type="rect",
-                            xref="x", yref="paper",
-                            x0=start_time, x1=end_time, y0=0.03, y1=0.17,
-                            fillcolor=sleep_stage_colors.get(stage, "#a6a6a6"),
-                            line=dict(width=0),
-                            layer="below"
-                        )
-                    except Exception as e:
-                        print(f"Error processing evening sleep level: {e}")
-                        continue
-            else:
-                # If we don't have detailed sleep levels, add a basic rectangle for the sleep period
-                # Only draw the portion that falls on the selected date
-                evening_end = min(sleep_end, datetime.combine(selected_date.date() + timedelta(days=1), datetime.min.time()))
-                
+            # If detailed sleep levels are not available, just show a basic rectangle for the sleep period
+            if sleep_start and sleep_end:
                 fig.add_shape(
                     type="rect",
-                    xref="x", yref="paper",
-                    x0=sleep_start, x1=evening_end, y0=0.03, y1=0.17,
-                    fillcolor="#6eaff5",  # Light blue for basic sleep visualization
-                    line=dict(color="#1e58b3", width=1),
-                    layer="below"
+                    x0=sleep_start, x1=sleep_end,
+                    y0=0, y1=100,
+                    fillcolor="#6eaff5",  # Light blue for sleep
+                    opacity=0.5,
+                    layer="below",
+                    line_width=0,
                 )
-            
-            # Add the sleep label annotation
-            label_x = sleep_start + (min(sleep_end, datetime.combine(selected_date.date() + timedelta(days=1), datetime.min.time())) - sleep_start) / 2
+        
+        # Add sleep label
+        if sleep_start and sleep_end:
+            mid_point = sleep_start + (sleep_end - sleep_start) / 2
             fig.add_annotation(
-                x=label_x,
-                y=0.1,
-                yref="paper",
+                x=mid_point,
+                y=90,
                 text=sleep_text,
                 showarrow=False,
-                font=dict(color="cornflowerblue", size=12),
+                font=dict(color='white', size=10),
                 bgcolor="rgba(0,0,0,0.5)",
+                bordercolor="#6eaff5",
+                borderwidth=1,
             )
     
-    # Add exercise data if available
-    if 'activities' in data and not data['activities'].empty:
-        for _, activity in data['activities'].iterrows():
-            # Calculate start and end times
-            if 'startTimeLocal' in activity and 'duration' in activity:
-                try:
-                    start_time = pd.to_datetime(activity['startTimeLocal'])
-                    end_time = start_time + pd.Timedelta(seconds=activity['duration'])
-                    
-                    # Only include activities that fall on the selected date
-                    if start_time.date() == selected_date.date() or end_time.date() == selected_date.date():
-                        # Add exercise rectangle
-                        fig.add_shape(
-                            type="rect",
-                            xref="x", yref="paper",
-                            x0=start_time, x1=end_time, y0=0.25, y1=0.45,
-                            fillcolor="rgba(50, 205, 50, 0.3)",
-                            line=dict(color="limegreen", width=1),
-                            layer="below"
-                        )
-                        
-                        # Add exercise label
-                        duration_mins = int(activity['duration'] / 60)
-                        activity_type = activity['activityType'] if 'activityType' in activity else 'Exercise'
-                        fig.add_annotation(
-                            x=start_time + (end_time - start_time) / 2,
-                            y=0.35,
-                            yref="paper",
-                            text=f"{activity_type} ({duration_mins} min)",
-                            showarrow=False,
-                            font=dict(color="limegreen", size=12),
-                            bgcolor="rgba(0,0,0,0.5)",
-                        )
-                except Exception as e:
-                    print(f"Error processing activity: {e}")
+    # Add activities data if available
+    if data['activities'] is not None and not data['activities'].empty:
+        # Define colors for different activity types
+        activity_colors = {
+            'running': '#ff9800',  # Orange
+            'trail_running': '#ff5722',  # Deep orange
+            'treadmill_running': '#ff7043',  # Lighter orange
+            'cycling': '#4caf50',  # Green
+            'indoor_cycling': '#81c784',  # Light green
+            'hiking': '#795548',  # Brown
+            'walking': '#9e9e9e',  # Grey
+            'swimming': '#03a9f4',  # Light blue
+            'lap_swimming': '#039be5',  # Blue
+            'open_water_swimming': '#0288d1',  # Darker blue
+            'strength_training': '#673ab7',  # Deep purple
+            'fitness_equipment': '#9575cd',  # Light purple
+            'yoga': '#ec407a',  # Pink
+            'cardio': '#f44336',  # Red
+            'default': '#607d8b'  # Blue grey - for any other type
+        }
+        
+        # Process each activity
+        for idx, activity in data['activities'].iterrows():
+            try:
+                # Skip if no start_time_local or duration
+                if pd.isna(activity['start_time_local']) or pd.isna(activity['duration']):
                     continue
-    
-    # Add meal data if available
-    if 'meals' in data and not data['meals'].empty:
-        # Group meals by meal type
-        for meal_type, meal_group in data['meals'].groupby('meal'):
-            # Use color based on meal type
-            meal_colors = {
-                'breakfast': 'rgb(255, 165, 0)',  # orange
-                'lunch': 'rgb(255, 215, 0)',      # gold
-                'dinner': 'rgb(138, 43, 226)',    # purple
-                'snacks': 'rgb(220, 20, 60)'      # crimson
-            }
-            
-            color = meal_colors.get(meal_type, 'gray')
-            
-            # Calculate approximate meal time based on typical times
-            meal_times = {
-                'breakfast': datetime.combine(selected_date.date(), datetime.strptime('08:00', '%H:%M').time()),
-                'lunch': datetime.combine(selected_date.date(), datetime.strptime('13:00', '%H:%M').time()),
-                'dinner': datetime.combine(selected_date.date(), datetime.strptime('20:00', '%H:%M').time()),
-                'snacks': datetime.combine(selected_date.date(), datetime.strptime('16:00', '%H:%M').time()),
-            }
-            
-            meal_time = meal_times.get(meal_type)
-            
-            if meal_time:
-                # Sum up the nutritional values
-                total_calories = meal_group['calories'].sum()
-                total_carbs = meal_group['carbs'].sum()
                 
-                # Add marker for the meal
-                fig.add_trace(go.Scatter(
-                    x=[meal_time],
-                    y=[60],  # Position near bottom of chart
-                    mode='markers',
-                    marker=dict(
-                        symbol='triangle-up',
-                        size=15,
-                        color=color
-                    ),
-                    name=f"{meal_type.capitalize()} ({int(total_calories)} cal, {int(total_carbs)}g carbs)",
-                    hoverinfo='text',
-                    hovertext=f"{meal_type.capitalize()}<br>{int(total_calories)} calories<br>{int(total_carbs)}g carbs"
-                ))
+                # Parse the start time
+                if isinstance(activity['start_time_local'], str):
+                    try:
+                        # Try different formats
+                        if 'T' in activity['start_time_local']:
+                            start_time = datetime.strptime(activity['start_time_local'], '%Y-%m-%dT%H:%M:%S.%f') if '.' in activity['start_time_local'] else datetime.strptime(activity['start_time_local'], '%Y-%m-%dT%H:%M:%S')
+                        else:
+                            start_time = datetime.strptime(activity['start_time_local'], '%Y-%m-%d %H:%M:%S')
+                    except ValueError:
+                        # If standard formats fail, try a more flexible approach
+                        start_time = pd.to_datetime(activity['start_time_local']).to_pydatetime()
+                else:
+                    # If it's already a timestamp or datetime
+                    start_time = pd.to_datetime(activity['start_time_local']).to_pydatetime()
                 
-                # Add vertical line at meal time
+                # Calculate end time based on duration (in seconds)
+                duration_seconds = float(activity['duration'])
+                end_time = start_time + timedelta(seconds=duration_seconds)
+                
+                # Get activity type and corresponding color
+                activity_type = str(activity['type']).lower()
+                color = activity_colors.get(activity_type, activity_colors['default'])
+                
+                # Add rectangle for the activity
+                # Place activities to the right of sleep data
                 fig.add_shape(
-                    type="line",
-                    xref="x", yref="paper",
-                    x0=meal_time, x1=meal_time, y0=0, y1=1,
-                    line=dict(color=color, width=1, dash="dot"),
+                    type="rect",
+                    x0=start_time, x1=end_time,
+                    y0=0, y1=100,
+                    fillcolor=color,
+                    opacity=0.7,
+                    layer="below",
+                    line_width=0,
+                    xref="x", yref="y",
                 )
+                
+                # Add label for the activity
+                activity_type_display = activity_type.replace('_', ' ').title()
+                duration_min = int(duration_seconds / 60)
+                
+                # Show label in the middle of the activity rectangle
+                mid_point = start_time + (end_time - start_time) / 2
+                fig.add_annotation(
+                    x=mid_point,
+                    y=50,  # Middle of the y-axis
+                    text=f"{activity_type_display}<br>{duration_min} min",
+                    showarrow=False,
+                    font=dict(color='white', size=10),
+                    bgcolor="rgba(0,0,0,0.5)",
+                    bordercolor=color,
+                    borderwidth=1,
+                )
+                
+            except Exception as e:
+                st.error(f"Error processing activity: {e}")
     
     return fig
 
