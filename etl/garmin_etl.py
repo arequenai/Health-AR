@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 load_dotenv("Credentials.env")
 
 import datetime
+from datetime import datetime as dt  # Add this to fix timestamp conversion issues
 import pandas as pd
 import logging
 import os
@@ -304,6 +305,157 @@ def get_sleep_score(api, date):
     except Exception as e:
         logger.warning(f"Failed to get sleep data for {date}: {str(e)}")
         return 0, 0
+
+def get_body_battery_data_for_day(garmin_client, date):
+    """
+    Get detailed body battery data for a specific day.
+    
+    Args:
+        garmin_client: Initialized Garmin API client
+        date: Date to get body battery data for (datetime.date object)
+        
+    Returns:
+        DataFrame with timestamps and body battery values for the day
+    """
+    try:
+        # Format the date for API call
+        formatted_date = date.strftime('%Y-%m-%d')
+        
+        # Get the stress data for the day, which also contains body battery data
+        stress_data = garmin_client.get_stress_data(formatted_date)
+        
+        # Extract body battery points
+        body_battery_data = []
+        
+        if stress_data and 'bodyBatteryValuesArray' in stress_data:
+            for point in stress_data['bodyBatteryValuesArray']:
+                try:
+                    # Each point is [timestamp, "MEASURED", bodyBatteryLevel, version]
+                    if len(point) >= 3:
+                        timestamp = dt.fromtimestamp(point[0] / 1000.0)
+                        body_battery = point[2]  # The battery level is the third element
+                        
+                        body_battery_data.append({
+                            'datetime': timestamp,
+                            'body_battery': body_battery
+                        })
+                except Exception as e:
+                    logger.warning(f"Error processing body battery point: {e}")
+                    continue
+        
+        # Create DataFrame
+        if body_battery_data:
+            df = pd.DataFrame(body_battery_data)
+            df.sort_values('datetime', inplace=True)
+            return df
+        else:
+            return pd.DataFrame(columns=['datetime', 'body_battery'])
+            
+    except Exception as e:
+        logger.warning(f"Failed to get body battery data for {date}: {str(e)}")
+        return pd.DataFrame(columns=['datetime', 'body_battery'])
+
+def get_stress_data_for_day(garmin_client, date):
+    """
+    Get detailed stress data for a specific day.
+    
+    Args:
+        garmin_client: Initialized Garmin API client
+        date: Date to get stress data for (datetime.date object)
+        
+    Returns:
+        DataFrame with timestamps and stress values for the day
+    """
+    try:
+        # Format the date for API call
+        formatted_date = date.strftime('%Y-%m-%d')
+        
+        # Get the stress data for the day
+        stress_data_response = garmin_client.get_stress_data(formatted_date)
+        
+        # Extract stress points
+        stress_points = []
+        
+        if stress_data_response and 'stressValuesArray' in stress_data_response:
+            for point in stress_data_response['stressValuesArray']:
+                try:
+                    # Each point is [timestamp, stressLevel]
+                    if len(point) >= 2:
+                        timestamp = dt.fromtimestamp(point[0] / 1000.0)
+                        stress_level = point[1]
+                        
+                        # Include points with -1 as these will be processed later
+                        stress_points.append({
+                            'datetime': timestamp,
+                            'stress': stress_level
+                        })
+                except Exception as e:
+                    logger.warning(f"Error processing stress point: {e}")
+                    continue
+        
+        # Create DataFrame
+        if not stress_points:
+            return pd.DataFrame(columns=['datetime', 'stress'])
+            
+        df = pd.DataFrame(stress_points)
+        df.sort_values('datetime', inplace=True)
+        
+        # Process -1 and -2 values
+        # First, replace -2 with NaN (these are unusable values)
+        df['stress'] = df['stress'].replace(-2, np.nan)
+        
+        # Replace -1 with NaN for processing
+        df['stress'] = df['stress'].replace(-1, np.nan)
+        
+        # Find gaps and interpolate if they're shorter than 15 minutes
+        if df['stress'].isna().any():
+            # Create a helper column to identify the groups of non-NaN values
+            df['valid'] = ~df['stress'].isna()
+            df['group'] = (df['valid'] != df['valid'].shift()).cumsum()
+            
+            # For each gap, check if it's short enough to interpolate
+            for gap_group in df[~df['valid']]['group'].unique():
+                gap_start = df[df['group'] == gap_group].index.min()
+                gap_end = df[df['group'] == gap_group].index.max()
+                
+                # Get timestamps at the beginning and end of the gap
+                if gap_start > 0 and gap_end < len(df) - 1:
+                    gap_start_time = df.loc[gap_start, 'datetime']
+                    gap_end_time = df.loc[gap_end, 'datetime']
+                    
+                    # Calculate the gap duration in minutes
+                    gap_duration = (gap_end_time - gap_start_time).total_seconds() / 60
+                    
+                    if gap_duration <= 15:
+                        # Short gap, interpolate
+                        df.loc[gap_start:gap_end, 'stress'] = np.nan  # Make sure it's NaN for interpolation
+                    # For longer gaps, leave as NaN
+            
+            # Interpolate for short gaps
+            df['stress'] = df['stress'].interpolate(method='linear')
+            
+            # Drop helper columns
+            df = df.drop(columns=['valid', 'group'])
+        
+        # Apply moving average smoothing (centered)
+        window_size = 10
+        df['stress_smooth'] = df['stress'].rolling(window=window_size, center=True, min_periods=1).mean()
+        
+        # Replace NaN in the smoothed column with original values for the edges
+        mask = df['stress_smooth'].isna()
+        df.loc[mask, 'stress_smooth'] = df.loc[mask, 'stress']
+        
+        # Replace the stress column with the smoothed version
+        df['stress'] = df['stress_smooth'].round(1)
+        
+        # Drop the smoothing column
+        df = df.drop(columns=['stress_smooth'])
+        
+        return df
+            
+    except Exception as e:
+        logger.warning(f"Failed to get stress data for {date}: {str(e)}")
+        return pd.DataFrame(columns=['datetime', 'stress'])
 
 def run_garmin_etl():
     """Execute Garmin ETL process."""

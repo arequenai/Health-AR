@@ -5,6 +5,7 @@ from viz.metrics_handler import get_metrics
 from viz.styles import DASHBOARD_CSS
 from etl import run_garmin_etl, run_whoop_etl, run_mfp_daily_only, run_gsheets_etl, run_glucose_etl, run_g_journal_etl
 import threading
+from viz.deep_dive.day_view import display_day_view
 
 # Set page config
 st.set_page_config(
@@ -30,9 +31,6 @@ header {visibility: hidden;}
 </style>
 """
 st.markdown(hide_st_style, unsafe_allow_html=True)
-
-# First, display the metrics with current data
-metrics = get_metrics()
 
 # Function to run ETL processes and then rerun the app
 def run_background_etl():
@@ -65,15 +63,30 @@ def run_background_etl():
         # Silent exception handling - log but don't show to user
         print(f"Background update failed: {str(e)}")
 
-# Start background thread for ETL processing
-if 'etl_started' not in st.session_state:
+# Add navigation to sidebar
+with st.sidebar:
+    st.title("Navigation")
+    page = st.radio(
+        "Go to",
+        ["Dashboard", "Deep Dive: Day View"],
+        index=0
+    )
+
+# Start background thread for ETL processing (only on dashboard)
+if 'etl_started' not in st.session_state and page == "Dashboard":
     st.session_state.etl_started = True
     threading.Thread(target=run_background_etl).start()
 
-# Main layout - display immediately with current data
-if metrics:
-    for metric_name in ['Nutrition', 'Glucose', 'Recovery', 'Sleep', 'Running', 'Strength']:
-        display_metric_box(metric_name,
-                         metrics[metric_name.lower()]['primary'],
-                         metrics[metric_name.lower()]['secondary1'],
-                         metrics[metric_name.lower()]['secondary2'])
+# Display the selected page
+if page == "Dashboard":
+    # Display the dashboard
+    metrics = get_metrics()
+    if metrics:
+        for metric_name in ['Nutrition', 'Glucose', 'Recovery', 'Sleep', 'Running', 'Strength']:
+            display_metric_box(metric_name,
+                            metrics[metric_name.lower()]['primary'],
+                            metrics[metric_name.lower()]['secondary1'],
+                            metrics[metric_name.lower()]['secondary2'])
+elif page == "Deep Dive: Day View":
+    # Display the day view
+    display_day_view()
