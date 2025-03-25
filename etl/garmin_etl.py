@@ -504,12 +504,12 @@ def get_sleep_data_for_day(garmin_client, date):
         daily_sleep = sleep_data['dailySleepDTO']
         
         # Extract sleep start and end times
-        if 'sleepStartTimestampGMT' in daily_sleep and daily_sleep['sleepStartTimestampGMT']:
-            start_time_ms = daily_sleep['sleepStartTimestampGMT']
+        if 'sleepStartTimestampLocal' in daily_sleep and daily_sleep['sleepStartTimestampLocal']:
+            start_time_ms = daily_sleep['sleepStartTimestampLocal']
             result['start_time'] = dt.fromtimestamp(start_time_ms / 1000.0)
         
-        if 'sleepEndTimestampGMT' in daily_sleep and daily_sleep['sleepEndTimestampGMT']:
-            end_time_ms = daily_sleep['sleepEndTimestampGMT']
+        if 'sleepEndTimestampLocal' in daily_sleep and daily_sleep['sleepEndTimestampLocal']:
+            end_time_ms = daily_sleep['sleepEndTimestampLocal']
             result['end_time'] = dt.fromtimestamp(end_time_ms / 1000.0)
         
         # Extract sleep durations

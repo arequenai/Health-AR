@@ -234,8 +234,20 @@ def create_day_view_chart(selected_date):
             
             for level in sleep_data['sleep_levels']:
                 try:
-                    start_time = datetime.strptime(level['startGMT'], '%Y-%m-%dT%H:%M:%S.%f') if '.' in level['startGMT'] else datetime.strptime(level['startGMT'], '%Y-%m-%dT%H:%M:%S.0')
-                    end_time = datetime.strptime(level['endGMT'], '%Y-%m-%dT%H:%M:%S.%f') if '.' in level['endGMT'] else datetime.strptime(level['endGMT'], '%Y-%m-%dT%H:%M:%S.0')
+                    # Parse timestamps - we need to handle both formats
+                    if isinstance(level['startGMT'], str):
+                        start_time = datetime.strptime(level['startGMT'], '%Y-%m-%dT%H:%M:%S.%f') if '.' in level['startGMT'] else datetime.strptime(level['startGMT'], '%Y-%m-%dT%H:%M:%S.0')
+                        end_time = datetime.strptime(level['endGMT'], '%Y-%m-%dT%H:%M:%S.%f') if '.' in level['endGMT'] else datetime.strptime(level['endGMT'], '%Y-%m-%dT%H:%M:%S.0')
+                        
+                        # Convert to local time
+                        local_tz = datetime.now().astimezone().tzinfo
+                        start_time = start_time.replace(tzinfo=pytz.UTC).astimezone(local_tz).replace(tzinfo=None)
+                        end_time = end_time.replace(tzinfo=pytz.UTC).astimezone(local_tz).replace(tzinfo=None)
+                    else:
+                        # If timestamps are already millisecond values
+                        start_time = datetime.fromtimestamp(level['startGMT']/1000)
+                        end_time = datetime.fromtimestamp(level['endGMT']/1000)
+                        
                     activity_level = level['activityLevel']
                     
                     # Map Garmin sleep levels to our visualization
@@ -246,9 +258,6 @@ def create_day_view_chart(selected_date):
                     # 2.0 = REM sleep
                     # 3.0 = Awake
                     stage = 0  # Default to Awake
-                    
-                    # Check the exact value type
-                    print(f"Sleep level: {activity_level}, type: {type(activity_level)}")
                     
                     # Mapping based on the API response format
                     if activity_level == 0.0:
@@ -293,6 +302,107 @@ def create_day_view_chart(selected_date):
             font=dict(color="cornflowerblue", size=12),
             bgcolor="rgba(0,0,0,0.5)",
         )
+    
+    # Check for sleep that starts on the current day (evening) but extends to the next day
+    next_day = selected_date + pd.Timedelta(days=1)
+    next_day_sleep = get_sleep_data(next_day)
+    
+    if next_day_sleep is not None and next_day_sleep['sleep_start'] is not None:
+        sleep_start = next_day_sleep['sleep_start']
+        
+        # Only include if sleep started on the selected date (after 10 PM)
+        if sleep_start.date() == selected_date.date() or (
+            sleep_start.date() == next_day.date() and sleep_start.hour < 4
+        ):
+            sleep_end = next_day_sleep['sleep_end']
+            sleep_duration = next_day_sleep['sleep_duration']
+            
+            # Add sleep label for evening sleep
+            sleep_hours = int(sleep_duration)
+            sleep_minutes = int((sleep_duration - sleep_hours) * 60)
+            sleep_text = f"Sleep ({sleep_hours}h {sleep_minutes}m)"
+            
+            # Add sleep score if available
+            if 'sleep_score' in next_day_sleep and next_day_sleep['sleep_score'] > 0:
+                sleep_text += f" - Score: {next_day_sleep['sleep_score']}"
+            
+            # If we have detailed sleep levels, display them
+            if 'sleep_levels' in next_day_sleep and next_day_sleep['sleep_levels']:
+                # Use the same color scheme as for the morning sleep
+                for level in next_day_sleep['sleep_levels']:
+                    try:
+                        # Parse timestamps - we need to handle both formats
+                        if isinstance(level['startGMT'], str):
+                            start_time = datetime.strptime(level['startGMT'], '%Y-%m-%dT%H:%M:%S.%f') if '.' in level['startGMT'] else datetime.strptime(level['startGMT'], '%Y-%m-%dT%H:%M:%S.0')
+                            end_time = datetime.strptime(level['endGMT'], '%Y-%m-%dT%H:%M:%S.%f') if '.' in level['endGMT'] else datetime.strptime(level['endGMT'], '%Y-%m-%dT%H:%M:%S.0')
+                            
+                            # Convert to local time
+                            local_tz = datetime.now().astimezone().tzinfo
+                            start_time = start_time.replace(tzinfo=pytz.UTC).astimezone(local_tz).replace(tzinfo=None)
+                            end_time = end_time.replace(tzinfo=pytz.UTC).astimezone(local_tz).replace(tzinfo=None)
+                        else:
+                            # If timestamps are already millisecond values
+                            start_time = datetime.fromtimestamp(level['startGMT']/1000)
+                            end_time = datetime.fromtimestamp(level['endGMT']/1000)
+                            
+                        activity_level = level['activityLevel']
+                        
+                        # Only include sleep levels that fall on the current day
+                        if start_time.date() != selected_date.date() and start_time.hour >= 4:
+                            continue
+                        
+                        # Adjust end time if it's on the next day
+                        if end_time.date() > selected_date.date():
+                            end_time = datetime.combine(selected_date.date() + timedelta(days=1), datetime.min.time())
+                        
+                        # Map Garmin sleep levels to our visualization
+                        stage = 0  # Default to Awake
+                        if activity_level == 0.0:
+                            stage = 2  # Deep sleep
+                        elif activity_level == 1.0:
+                            stage = 1  # Light sleep
+                        elif activity_level == 2.0:
+                            stage = 3  # REM sleep
+                        elif activity_level == 3.0:
+                            stage = 0  # Awake
+                        
+                        # Add colored rectangle for sleep stage
+                        fig.add_shape(
+                            type="rect",
+                            xref="x", yref="paper",
+                            x0=start_time, x1=end_time, y0=0.03, y1=0.17,
+                            fillcolor=sleep_stage_colors.get(stage, "#a6a6a6"),
+                            line=dict(width=0),
+                            layer="below"
+                        )
+                    except Exception as e:
+                        print(f"Error processing evening sleep level: {e}")
+                        continue
+            else:
+                # If we don't have detailed sleep levels, add a basic rectangle for the sleep period
+                # Only draw the portion that falls on the selected date
+                evening_end = min(sleep_end, datetime.combine(selected_date.date() + timedelta(days=1), datetime.min.time()))
+                
+                fig.add_shape(
+                    type="rect",
+                    xref="x", yref="paper",
+                    x0=sleep_start, x1=evening_end, y0=0.03, y1=0.17,
+                    fillcolor="#6eaff5",  # Light blue for basic sleep visualization
+                    line=dict(color="#1e58b3", width=1),
+                    layer="below"
+                )
+            
+            # Add the sleep label annotation
+            label_x = sleep_start + (min(sleep_end, datetime.combine(selected_date.date() + timedelta(days=1), datetime.min.time())) - sleep_start) / 2
+            fig.add_annotation(
+                x=label_x,
+                y=0.1,
+                yref="paper",
+                text=sleep_text,
+                showarrow=False,
+                font=dict(color="cornflowerblue", size=12),
+                bgcolor="rgba(0,0,0,0.5)",
+            )
     
     # Add exercise data if available
     if 'activities' in data and not data['activities'].empty:
@@ -401,38 +511,14 @@ def display_day_view():
         col1, col2 = st.columns([3, 1])
         
         with col1:
-            # Load available dates from glucose_daily.csv (or another reliable source)
-            try:
-                df_glucose = pd.read_csv('data/glucose_daily.csv')
-                df_glucose['date'] = pd.to_datetime(df_glucose['date'])
-                
-                # Create a sorted list of dates
-                available_dates = sorted(df_glucose['date'].unique(), reverse=True)
-                
-                # Create a dropdown for date selection
-                selected_date = st.selectbox(
-                    'Select a date to view:',
-                    options=available_dates,
-                    format_func=lambda x: x.strftime('%A, %B %d, %Y')
-                )
-            except Exception as e:
-                # Fallback if glucose data isn't available
-                try:
-                    df_garmin = pd.read_csv('data/garmin_daily.csv')
-                    df_garmin['date'] = pd.to_datetime(df_garmin['date'])
-                    available_dates = sorted(df_garmin['date'].unique(), reverse=True)
-                    selected_date = st.selectbox(
-                        'Select a date to view:',
-                        options=available_dates,
-                        format_func=lambda x: x.strftime('%A, %B %d, %Y')
-                    )
-                except Exception as e:
-                    # Last resort - show date picker with recent dates
-                    selected_date = st.date_input(
-                        'Select a date to view:',
-                        value=datetime.now().date() - timedelta(days=1)
-                    )
-                    selected_date = pd.Timestamp(selected_date)
+            # Use a calendar date picker instead of dropdown
+            selected_date = st.date_input(
+                'Select a date to view:',
+                value=datetime.now().date() - timedelta(days=1),
+                format="YYYY-MM-DD"
+            )
+            # Convert to pandas Timestamp for consistency with the rest of the code
+            selected_date = pd.Timestamp(selected_date)
     
     # Create and display the main day view chart
     chart_container = st.container()
