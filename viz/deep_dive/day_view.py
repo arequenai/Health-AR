@@ -603,7 +603,7 @@ def display_day_view():
     # Apply CSS
     st.markdown(DEEP_DIVE_CSS, unsafe_allow_html=True)
     
-    st.title("Health Deep Dive: Day View")
+    st.title("Today")
     
     # Create a container for the date selector
     date_container = st.container()

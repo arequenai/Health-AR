@@ -6,6 +6,9 @@ from viz.styles import DASHBOARD_CSS
 from etl import run_garmin_etl, run_whoop_etl, run_mfp_daily_only, run_gsheets_etl, run_glucose_etl, run_g_journal_etl
 import threading
 from viz.deep_dive.day_view import display_day_view
+from viz.weekly_evolution import show_weekly_evolution
+from viz.current_week_analysis import show_current_week_analysis
+from etl.load_data import load_data
 
 # Set page config
 st.set_page_config(
@@ -68,7 +71,7 @@ with st.sidebar:
     st.title("Navigation")
     page = st.radio(
         "Go to",
-        ["Dashboard", "Deep Dive: Day View"],
+        ["Dashboard", "Weekly Evolution", "Current Week Analysis", "Deep Dive: Day View"],
         index=0
     )
 
@@ -87,6 +90,32 @@ if page == "Dashboard":
                             metrics[metric_name.lower()]['primary'],
                             metrics[metric_name.lower()]['secondary1'],
                             metrics[metric_name.lower()]['secondary2'])
+elif page == "Weekly Evolution":
+    # Display the weekly evolution page
+    # Add a number input for selecting the number of weeks to show
+    num_weeks = st.number_input(
+        "Number of weeks to display", 
+        min_value=2, 
+        max_value=52, 
+        value=8, 
+        step=1,
+        help="Select how many recent weeks to display in the charts and summary"
+    )
+    data = load_data()
+    show_weekly_evolution(data, num_weeks)
+elif page == "Current Week Analysis":
+    # Display the current week analysis page
+    # Add a number input for selecting the number of weeks for historical comparison
+    num_weeks = st.number_input(
+        "Historical comparison weeks", 
+        min_value=2, 
+        max_value=52, 
+        value=8, 
+        step=1,
+        help="Select how many previous weeks to use for historical averages"
+    )
+    data = load_data()
+    show_current_week_analysis(data, num_weeks)
 elif page == "Deep Dive: Day View":
     # Display the day view
     display_day_view()

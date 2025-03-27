@@ -88,4 +88,13 @@ DASHBOARD_CSS = """
     .stStatusWidget {display: none !important;}
     .reportview-container .main .block-container {padding-top: 0rem;}
     </style>
-""" 
+"""
+
+# Define color mapping for metric levels
+LEVEL_COLORS = {
+    5: "#2ECC40",  # Dark green
+    4: "#01FF70",  # Light green
+    3: "#FFDC00",  # Yellow
+    2: "#FF851B",  # Orange
+    1: "#FF4136",  # Red
+} 
